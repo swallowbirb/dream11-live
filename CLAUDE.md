@@ -78,6 +78,11 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
     the seed (upserts) and the server, which also serves `apps/web/dist` with an SPA fallback on the same origin
     (no CORS). Needs `PORT`, `DATABASE_URL` (SQLite file on a persistent disk), `LIVEKIT_*` from the environment.
     `SITE=https://… pnpm replay` drives the replay on a deployed site (replay routes have no auth).
+  - **Deploy (Render):** `Dockerfile` (one container: install, `prisma generate`, web build, `pnpm start`) +
+    `render.yaml` (Blueprint, free web service, health check `/api/health`; the three `LIVEKIT_*` values are entered
+    in Render). Test locally: `podman build -t dream11-live .` then
+    `podman run -p 3100:10000 --env-file <file with LIVEKIT_*> dream11-live`. The free plan has no disk: SQLite resets
+    on each deploy or restart (seed and bots recreate themselves; sign-ups are lost).
   - **Demo bots** (DESIGN §5.6): on by default, the server keeps 6 bot creator streams live and starts the
     replay itself, looping (`REPLAY_SPEED`, default 6 = 5 s a ball). `BOTS=0` turns both off. The personas,
     chat lines and polls are in `apps/server/src/bots/script.ts`. Clips are in `apps/web/public/bots/`.
