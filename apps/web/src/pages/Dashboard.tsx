@@ -81,8 +81,22 @@ export function DashboardPage() {
     [],
   );
 
+  // Publishes the facecam to a connected room (skips sources already published).
+  const publishCam = async (r: Room, c: CamTracks) => {
+    const lp = r.localParticipant;
+    if (!lp.getTrackPublication(Track.Source.Camera)) await lp.publishTrack(c.video, { source: Track.Source.Camera });
+    if (!lp.getTrackPublication(Track.Source.Microphone))
+      await lp.publishTrack(c.audio, { source: Track.Source.Microphone });
+  };
+
+  // Works before and during a stream: while live, turning the camera on or off publishes or unpublishes it.
   const toggleCam = async () => {
     if (cam) {
+      const lp = room.current?.localParticipant;
+      if (lp) {
+        await lp.unpublishTrack(cam.video, false);
+        await lp.unpublishTrack(cam.audio, false);
+      }
       cam.video.stop();
       cam.audio.stop();
       setCam(null);
@@ -93,10 +107,12 @@ export function DashboardPage() {
         audio: { echoCancellation: true, noiseSuppression: true },
         video: { resolution: VideoPresets.h720.resolution },
       });
-      setCam({
+      const c = {
         video: tracks.find((t) => t.kind === Track.Kind.Video) as LocalVideoTrack,
         audio: tracks.find((t) => t.kind === Track.Kind.Audio) as LocalAudioTrack,
-      });
+      };
+      setCam(c);
+      if (room.current) await publishCam(room.current, c);
     } catch (e) {
       toast.error(`Camera unavailable: ${(e as Error).message}`);
     }
@@ -139,10 +155,8 @@ export function DashboardPage() {
             name: 'match-audio',
           });
       }
-      if (cam) {
-        await lp.publishTrack(cam.video, { source: Track.Source.Camera });
-        await lp.publishTrack(cam.audio, { source: Track.Source.Microphone });
-      }
+      // camRef, not the render's `cam`: the camera may have come on after Go live was clicked.
+      if (camRef.current) await publishCam(r, camRef.current);
       return res.stream;
     },
     onSuccess: (s) => {
@@ -236,7 +250,7 @@ export function DashboardPage() {
                 />
               </label>
             </Button>
-            <Button variant={cam ? 'secondary' : 'outline'} onClick={toggleCam} disabled={live} id="camToggle">
+            <Button variant={cam ? 'secondary' : 'outline'} onClick={toggleCam} disabled={goLive.isPending || end.isPending} id="camToggle">
               {cam ? <CameraOff /> : <Camera />} {cam ? 'Camera off' : 'Camera + mic'}
             </Button>
             {fileUrl && (
