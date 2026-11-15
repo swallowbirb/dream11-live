@@ -39,3 +39,27 @@ export type ChatMessage = {
   teamBadge: string | null;
   createdAt: string;
 };
+
+export type MatchSummary = {
+  id: string;
+  tournament: string;
+  teamA: string;
+  teamB: string;
+  status: 'upcoming' | 'live' | 'completed';
+  startsAt: string;
+};
+
+export type StreamInfo = {
+  id: string;
+  title: string;
+  language: string;
+  supportingTeam: string | null;
+  status: 'starting' | 'live' | 'ended';
+  startedAt: string;
+  endedAt: string | null;
+  channel: { id: string; displayName: string; userId: string };
+  match: MatchSummary | null;
+};
+
+/** Returned by POST /api/streams and GET /api/streams/:id/token. */
+export type StreamToken = { url: string; token: string };

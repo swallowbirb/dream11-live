@@ -363,6 +363,8 @@ notifications   id, user_id, type, payload_json, read, created_at
 
 ### REST
 
+All paths are served under `/api` (the web app proxies it to the server).
+
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | `/auth/signup` | name, password, role → session |
@@ -376,6 +378,8 @@ notifications   id, user_id, type, payload_json, read, created_at
 | GET | `/me/following` | followed channels |
 | POST | `/streams` | go live (returns a publish token) |
 | POST | `/streams/:id/end` | end stream |
+| GET | `/streams/:id` | stream + channel + match |
+| GET | `/streams/:id/token` | viewer token (live streams only) |
 | POST | `/streams/:id/clips` | create clip |
 | GET | `/channels/:id/clips`, `/matches/:id/clips` | list clips |
 | POST | `/streams/:id/polls`, `/polls/:id/close` | polls |

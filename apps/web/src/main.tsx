@@ -7,6 +7,7 @@ import { AppShell } from '@/components/AppShell';
 import { AuthPage } from '@/pages/Auth';
 import { Placeholder } from '@/pages/Placeholder';
 import { ProfilePage } from '@/pages/Profile';
+import { DashboardPage } from '@/pages/Dashboard';
 import './index.css';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
@@ -22,7 +23,7 @@ const router = createBrowserRouter([
       { path: '/matches/:id', element: <Placeholder title="Match" /> },
       { path: '/c/:channelId', element: <Placeholder title="Channel" /> },
       { path: '/watch/:streamId', element: <Placeholder title="Watch" /> },
-      { path: '/dashboard', element: <Placeholder title="Creator dashboard" note="Go-live setup arrives in P4." /> },
+      { path: '/dashboard', element: <DashboardPage /> },
       { path: '/following', element: <Placeholder title="Following" /> },
       { path: '/profile', element: <ProfilePage /> },
     ],

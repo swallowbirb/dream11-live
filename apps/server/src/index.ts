@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { Server } from 'socket.io';
 import { prisma } from './db';
 import { authRoutes } from './auth';
+import { streamRoutes } from './streams';
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -13,6 +14,7 @@ app.get('/api/health', async () => {
 });
 
 await app.register(authRoutes);
+await app.register(streamRoutes);
 
 // Socket.IO shares Fastify's HTTP server, so web only needs one proxy target.
 const io = new Server(app.server, { path: '/socket.io' });
