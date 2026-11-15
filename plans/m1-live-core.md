@@ -95,7 +95,8 @@ Keep the working publish/subscribe snippets: P4 and P5 copy them.
 
 ## P5. Player page (S3 part 2, 20 min)
 
-- `/watch/:streamId`: fetch stream + viewer token, connect, pick tracks by source.
+- `/watch/:streamId`: fetch stream + viewer token, connect, pick tracks by source. Register `TrackSubscribed`
+  listeners **before** `room.connect()`, or tracks already in the room are missed (found in the P1 spike).
 - Layout: match video full size, facecam as a draggable PiP (Framer Motion `drag` constrained to the player).
   Toggle: **PiP / Side by side**.
 - Two volume sliders: **Match** (screen-share audio) and **Creator** (mic), each setting its audio element's

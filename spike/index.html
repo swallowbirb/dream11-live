@@ -52,10 +52,11 @@
     $('heading').textContent = `LiveKit spike: ${role}`;
     $(role === 'viewer' ? 'viewer' : 'publisher').hidden = false;
 
-    async function connect(r) {
+    async function connect(r, setup) {
       const { url, token, identity } = await (await fetch(`/token?role=${r}`)).json();
       const room = new Room({ adaptiveStream: true, dynacast: true });
       room.on(RoomEvent.Disconnected, () => log('disconnected'));
+      setup?.(room); // listeners must exist before connect, or tracks already in the room are missed
       await room.connect(url, token);
       log(`connected as ${identity} to room "${room.name}"`);
       return room;
@@ -102,27 +103,29 @@
 
     $('join').onclick = async () => {
       try {
-        const room = await connect('viewer');
-        room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
-          log(`subscribed ${pub.source} (${track.kind}) from ${participant.identity}`);
-          const el = track.attach();
-          if (track.kind === 'video') {
-            const tile = document.createElement('div');
-            tile.className = 'tile';
-            tile.id = `tile-${pub.trackSid}`;
-            tile.innerHTML = `<b>${pub.source}</b>`;
-            tile.append(el);
-            $('remote').append(tile);
-          } else {
-            audioEls[pub.source] = el;
-            document.body.append(el);
-            applyVolumes();
-          }
-        });
-        room.on(RoomEvent.TrackUnsubscribed, (track, pub) => {
-          log(`unsubscribed ${pub.source}`);
-          track.detach().forEach((el) => el.remove());
-          $(`tile-${pub.trackSid}`)?.remove();
+        const room = await connect('viewer', (room) => {
+          room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
+            log(`subscribed ${pub.source} (${track.kind}) from ${participant.identity}`);
+            const el = track.attach();
+            el.dataset.source = pub.source;
+            if (track.kind === 'video') {
+              const tile = document.createElement('div');
+              tile.className = 'tile';
+              tile.id = `tile-${pub.trackSid}`;
+              tile.innerHTML = `<b>${pub.source}</b>`;
+              tile.append(el);
+              $('remote').append(tile);
+            } else {
+              audioEls[pub.source] = el;
+              document.body.append(el);
+              applyVolumes();
+            }
+          });
+          room.on(RoomEvent.TrackUnsubscribed, (track, pub) => {
+            log(`unsubscribed ${pub.source}`);
+            track.detach().forEach((el) => el.remove());
+            $(`tile-${pub.trackSid}`)?.remove();
+          });
         });
         await room.startAudio();
       } catch (e) { log('ERROR', e.message ?? e); }
