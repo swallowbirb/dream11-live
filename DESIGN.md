@@ -1,7 +1,7 @@
 # Cricket Live Reaction Platform: Design Doc
 
 **Status:** Draft v2 · 2026-11-15 (tech stack decided)
-**Scope:** Prototype
+**Scope:** Prototype. The 4–5 hour build order and the features cut from "Build now" are in [`plan.md`](plan.md).
 
 > One line: a platform where cricket creators react live, and fans watch, chat and share the excitement together.
 
