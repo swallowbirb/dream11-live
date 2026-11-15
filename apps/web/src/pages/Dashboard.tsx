@@ -16,6 +16,8 @@ import { LivePill } from '@/components/LivePill';
 import { ViewerCount } from '@/components/ViewerCount';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
+import { useReactions } from '@/hooks/useReactions';
+import { HypeMeter } from '@/components/player/Reactions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +51,7 @@ export function DashboardPage() {
   const room = useRef<Room | null>(null);
   const live = stream?.status === 'live';
   const chat = useStreamRoom(live ? stream.id : undefined);
+  const reactions = useReactions(live ? stream.id : undefined);
 
   // Default to the first live match.
   useEffect(() => {
@@ -164,6 +167,7 @@ export function DashboardPage() {
         <h1 className="text-3xl font-bold">Creator dashboard</h1>
         {live && <LivePill />}
         {live && <ViewerCount count={chat.viewerCount} />}
+        {live && <HypeMeter value={reactions.hype} className="max-w-xs" />}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">

@@ -405,8 +405,8 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | S→C | `chat:message` | `streamId`, message + user badges |
 | S→C | `chat:deleted` | `messageId` |
 | S→C | `chat:rejected` | `reason` (slow mode, banned, filtered…) |
-| C→S | `reaction:batch` | `{ emoji: count }` |
-| S→C | `reaction:burst` | totals per emoji + hype level |
+| C→S | `reaction:batch` | `streamId`, `counts` `{ emoji: count }` |
+| S→C | `reaction:burst` | `streamId`, this tick's counts per emoji, hype level 0–100 (taps in the last 5 s) |
 | S→C | `poll:update` | poll state + counts |
 | C→S | `poll:vote` | `pollId, optionIndex` |
 | S→C | `score:update` | `matchId`, `score` (runs, wickets, overs, batters, bowler, last 6 balls) |

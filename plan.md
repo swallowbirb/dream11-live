@@ -163,7 +163,7 @@ New ideas that come up during the build go here, unbuilt.
 | M1 | S4 Chat | done: chat with team + creator badges, live viewer count |
 | M2 | S1 ReplayFeed + matches | done: ReplayFeed (6-over IND innings), `score:update` to stream rooms, `pnpm replay` |
 | M2 | S2 Browse pages | done: home, matches, match page, cards, scorecard strip on the player |
-| M2 | S3 Reactions + polls | not started |
+| M2 | S3 Reactions + polls | in progress: reactions + hype meter done; polls next (M2 P4) |
 | M3 | S1 Follow + notify | not started |
 | M3 | S2 Subs + mod (thin) | not started |
 | M3 | S3 Polish pass | not started |

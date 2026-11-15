@@ -31,6 +31,21 @@ export const ChatSend = z.object({
 });
 export type ChatSend = z.infer<typeof ChatSend>;
 
+/** The emoji tray, in order (DESIGN §3.1 Chat). */
+export const REACTIONS = ['🔥', '😱', '👏', '🏏', '😂', '💔'] as const;
+export type Reaction = (typeof REACTIONS)[number];
+export type ReactionCounts = Partial<Record<Reaction, number>>;
+
+/** C→S `reaction:batch`: taps since the last batch (client sends at most every 250 ms). */
+export const ReactionBatch = z.object({
+  streamId: z.string().min(1),
+  counts: z.partialRecord(z.enum(REACTIONS), z.number().int().min(1).max(50)),
+});
+export type ReactionBatch = z.infer<typeof ReactionBatch>;
+
+/** S→C `reaction:burst`, every 250 ms while a room has taps or hype: this tick's counts + hype 0–100. */
+export type ReactionBurst = { streamId: string; counts: ReactionCounts; hype: number };
+
 export type PublicUser = { id: string; name: string; role: Role };
 
 export type ChatMessage = {

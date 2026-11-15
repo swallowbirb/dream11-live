@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 import {
   Room,
@@ -47,7 +47,18 @@ function AudioEl({ track, volume }: { track: RemoteAudioTrack; volume: number })
  * Subscribes to a stream's LiveKit room and arranges the two parts:
  * match (screen_share + screen_share_audio) and facecam (camera + microphone).
  */
-export function LivePlayer({ url, token, onPublisherLeft }: { url: string; token: string; onPublisherLeft?: () => void }) {
+export function LivePlayer({
+  url,
+  token,
+  onPublisherLeft,
+  overlay,
+}: {
+  url: string;
+  token: string;
+  onPublisherLeft?: () => void;
+  /** Drawn over the video frame (e.g. floating reactions); doesn't take pointer events. */
+  overlay?: ReactNode;
+}) {
   const [tracks, setTracks] = useState<Tracks>({});
   const [layout, setLayout] = useState<Layout>('pip');
   const [matchVol, setMatchVol] = useState(0.8);
@@ -118,6 +129,8 @@ export function LivePlayer({ url, token, onPublisherLeft }: { url: string; token
             <VideoEl track={camVideo!} className="aspect-video w-full rounded-md object-cover" />
           </div>
         )}
+
+        {overlay && <div className="pointer-events-none absolute inset-0 z-[15] overflow-hidden">{overlay}</div>}
 
         {audioBlocked && main && (
           <button

@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io';
-import { ChatSend, EV, type ChatMessage, type StreamStatus } from '@d11/shared';
+import { ChatSend, EV, ReactionBatch, type ChatMessage, type ReactionBurst, type ReactionCounts, type StreamStatus } from '@d11/shared';
 import type { ChatMessage as ChatRow, User } from '@prisma/client';
 import { prisma } from './db';
 import { userForToken } from './auth';
@@ -27,6 +27,26 @@ const toMessage = (m: ChatRow & { user: Pick<User, 'id' | 'name'> }, ownerId: st
 
 let ioRef: Server | null = null;
 
+// Reactions: taps per stream since the last flush, plus a rolling window of per-tick totals for the hype meter.
+const FLUSH_MS = 250;
+const HYPE_WINDOW = 20; // ticks = 5 s
+const HYPE_PER_TAP = 4; // 25 taps in 5 s fills the meter
+type Hype = { pending: ReactionCounts; window: number[] };
+const hype = new Map<string, Hype>();
+
+function flushReactions(io: Server) {
+  for (const [streamId, h] of hype) {
+    const counts = h.pending;
+    h.pending = {};
+    const total = Object.values(counts).reduce((a, n) => a + (n ?? 0), 0);
+    h.window = [...h.window, total].slice(-HYPE_WINDOW);
+    const sum = h.window.reduce((a, n) => a + n, 0);
+    const burst: ReactionBurst = { streamId, counts, hype: Math.min(100, sum * HYPE_PER_TAP) };
+    io.to(roomOf(streamId)).emit(EV.reactionBurst, burst);
+    if (sum === 0) hype.delete(streamId); // that 0 burst let clients settle the meter
+  }
+}
+
 /** Sockets in a stream's room minus the streamer's (same count as stream:status). For REST listings. */
 export function viewerCount(streamId: string, ownerUserId: string) {
   const ids = ioRef?.sockets.adapter.rooms.get(roomOf(streamId));
@@ -38,6 +58,7 @@ export function viewerCount(streamId: string, ownerUserId: string) {
 
 export function setupRealtime(io: Server) {
   ioRef = io;
+  setInterval(() => flushReactions(io), FLUSH_MS);
   async function broadcastCount(streamId: string) {
     const owner = await streamOwner(streamId);
     const sockets = await io.in(roomOf(streamId)).fetchSockets();
@@ -90,6 +111,15 @@ export function setupRealtime(io: Server) {
         include: { user: { select: { id: true, name: true } } },
       });
       io.to(roomOf(streamId)).emit(EV.chatMessage, { streamId, message: toMessage(row, await streamOwner(streamId)) });
+    });
+
+    socket.on(EV.reactionBatch, (payload: unknown) => {
+      const parsed = ReactionBatch.safeParse(payload);
+      if (!parsed.success || !socket.rooms.has(roomOf(parsed.data.streamId))) return;
+      const h = hype.get(parsed.data.streamId) ?? { pending: {}, window: [] };
+      hype.set(parsed.data.streamId, h);
+      for (const [emoji, n] of Object.entries(parsed.data.counts) as [keyof ReactionCounts, number][])
+        h.pending[emoji] = (h.pending[emoji] ?? 0) + n;
     });
 
     socket.on('disconnecting', () => {

@@ -9,6 +9,8 @@ import { Scorecard } from '@/components/player/Scorecard';
 import { ViewerCount } from '@/components/ViewerCount';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
+import { useReactions } from '@/hooks/useReactions';
+import { EmojiTray, HypeMeter, ReactionOverlay } from '@/components/player/Reactions';
 import { api } from '@/lib/api';
 
 export function WatchPage() {
@@ -19,8 +21,9 @@ export function WatchPage() {
     queryFn: () => api<{ stream: StreamInfo }>(`/streams/${streamId}`),
   });
   const stream = data?.stream;
-  const room = useStreamRoom(stream?.id);
   const live = stream?.status === 'live';
+  const room = useStreamRoom(stream?.id);
+  const reactions = useReactions(live ? stream?.id : undefined);
   const { data: tok } = useQuery({
     queryKey: ['stream-token', streamId],
     queryFn: () => api<StreamToken>(`/streams/${streamId}/token`),
@@ -41,6 +44,7 @@ export function WatchPage() {
             url={tok.url}
             token={tok.token}
             onPublisherLeft={() => qc.invalidateQueries({ queryKey: ['stream', streamId] })}
+            overlay={<ReactionOverlay floaters={reactions.floaters} done={reactions.done} />}
           />
         ) : live ? (
           <div className="aspect-video animate-pulse rounded-2xl bg-ink/80" />
@@ -51,6 +55,13 @@ export function WatchPage() {
               <p className="font-display text-2xl font-bold">{stream.channel.displayName} is offline</p>
               <p className="text-sm text-white/60">This stream has ended. Follow to catch the next one.</p>
             </div>
+          </div>
+        )}
+
+        {live && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-surface px-3 py-2 shadow-sm">
+            <EmojiTray onTap={reactions.tap} />
+            <HypeMeter value={reactions.hype} />
           </div>
         )}
 
