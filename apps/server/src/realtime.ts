@@ -9,19 +9,23 @@ import { roomOf } from './rooms';
 import { pollJoin, pollSockets } from './polls';
 export { roomOf };
 
-// streamId → the streamer's user id (for the creator badge and the viewer count). Streams never change owner.
-const ownerCache = new Map<string, string | null>();
-async function streamOwner(streamId: string) {
+// streamId → the streamer's user id and channel (creator badge, viewer count, sub badges). Streams never change owner.
+type Owner = { userId: string; channelId: string } | null;
+const ownerCache = new Map<string, Owner>();
+async function streamRefs(streamId: string): Promise<Owner> {
   if (!ownerCache.has(streamId)) {
-    const s = await prisma.stream.findUnique({ where: { id: streamId }, select: { channel: { select: { userId: true } } } });
-    ownerCache.set(streamId, s?.channel.userId ?? null);
+    const s = await prisma.stream.findUnique({ where: { id: streamId }, select: { channelId: true, channel: { select: { userId: true } } } });
+    ownerCache.set(streamId, s ? { userId: s.channel.userId, channelId: s.channelId } : null);
   }
   return ownerCache.get(streamId)!;
 }
+async function streamOwner(streamId: string) {
+  return (await streamRefs(streamId))?.userId ?? null;
+}
 
-const toMessage = (m: ChatRow & { user: Pick<User, 'id' | 'name'> }, ownerId: string | null): ChatMessage => ({
+const toMessage = (m: ChatRow & { user: Pick<User, 'id' | 'name'> }, ownerId: string | null, subs: Set<string>): ChatMessage => ({
   id: m.id,
-  user: { name: m.user.name, isCreator: m.user.id === ownerId },
+  user: { id: m.user.id, name: m.user.name, isCreator: m.user.id === ownerId, isSub: subs.has(m.user.id) },
   body: m.body,
   teamBadge: m.teamBadge,
   createdAt: m.createdAt.toISOString(),
@@ -65,6 +69,17 @@ export async function notifyFollowers(channelId: string, payload: Notify) {
   if (follows.length) ioRef.to(follows.map((f) => `user:${f.followerId}`)).emit(EV.notify, payload);
 }
 
+/** Which of these users have an active subscription to the stream's channel (for the SUB badge). */
+async function subscriberIds(streamId: string, userIds: string[]) {
+  const ref = await streamRefs(streamId);
+  if (!ref || !userIds.length) return new Set<string>();
+  const rows = await prisma.subscription.findMany({
+    where: { channelId: ref.channelId, status: 'active', userId: { in: [...new Set(userIds)] } },
+    select: { userId: true },
+  });
+  return new Set(rows.map((r) => r.userId));
+}
+
 export function setupRealtime(io: Server) {
   ioRef = io;
   setInterval(() => flushReactions(io), FLUSH_MS);
@@ -102,7 +117,8 @@ export function setupRealtime(io: Server) {
         }),
         streamOwner(streamId),
       ]);
-      socket.emit(EV.chatHistory, { streamId, messages: rows.reverse().map((m) => toMessage(m, owner)) });
+      const subs = await subscriberIds(streamId, rows.map((r) => r.userId));
+      socket.emit(EV.chatHistory, { streamId, messages: rows.reverse().map((m) => toMessage(m, owner, subs)) });
       await pollJoin(socket, streamId, user.id);
       await broadcastCount(streamId);
     });
@@ -121,7 +137,8 @@ export function setupRealtime(io: Server) {
         data: { streamId, userId: user.id, body, teamBadge: teamBadge || null },
         include: { user: { select: { id: true, name: true } } },
       });
-      io.to(roomOf(streamId)).emit(EV.chatMessage, { streamId, message: toMessage(row, await streamOwner(streamId)) });
+      const subs = await subscriberIds(streamId, [user.id]);
+      io.to(roomOf(streamId)).emit(EV.chatMessage, { streamId, message: toMessage(row, await streamOwner(streamId), subs) });
     });
 
     pollSockets(io, socket, user.id);

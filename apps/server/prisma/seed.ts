@@ -1,6 +1,7 @@
 // Seed: 3 creators, 3 viewers (password "pass"), 2 matches. Safe to re-run (upserts).
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import { DEFAULT_TIERS } from '../src/tiers';
 
 const prisma = new PrismaClient();
 const hash = await bcrypt.hash('pass', 10);
@@ -27,6 +28,11 @@ for (const c of creators) {
 }
 for (const name of viewers) {
   await prisma.user.upsert({ where: { name }, update: {}, create: { name, role: 'viewer', passwordHash: hash } });
+}
+
+// 3 mock subscription tiers per creator channel (only if the channel has none yet).
+for (const ch of await prisma.channel.findMany({ include: { _count: { select: { subTiers: true } } } })) {
+  if (ch._count.subTiers === 0) await prisma.subTier.createMany({ data: DEFAULT_TIERS.map((t) => ({ ...t, channelId: ch.id })) });
 }
 
 const matches = [

@@ -77,7 +77,8 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
   - `pnpm db:migrate` (`prisma migrate dev`, after editing `apps/server/prisma/schema.prisma`), `pnpm db:seed`
     (`apps/server/prisma/seed.ts`, upserts, safe to re-run). The DB is `apps/server/prisma/dev.db` (gitignored).
   - **Seed users** (password `pass` for all): creators `RohitReacts`, `AussieAnalyst`, `CoverDriveComedy`;
-    viewers `priya`, `arjun`, `sam`. Matches: IND vs AUS (live), ENG vs NZ (upcoming).
+    viewers `priya`, `arjun`, `sam`. Matches: IND vs AUS (live), ENG vs NZ (upcoming). Each creator channel gets 3
+    sub tiers (`src/tiers.ts`; re-run the seed on an older DB to add them).
   - `pnpm --filter web build`: production build of the web app.
   - Server env: `apps/server/.env` (gitignored, copy of `.env.example`; LiveKit keys copied from `spike/.env`).
   - Add shadcn components from `apps/web`: `pnpm dlx shadcn@latest add <name>`.

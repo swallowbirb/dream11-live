@@ -77,7 +77,7 @@ export type PublicUser = { id: string; name: string; role: Role };
 
 export type ChatMessage = {
   id: string;
-  user: { name: string; isCreator: boolean };
+  user: { id: string; name: string; isCreator: boolean; isSub: boolean };
   body: string;
   teamBadge: string | null;
   createdAt: string;
@@ -156,3 +156,11 @@ export type ChannelInfo = {
 
 /** S→C `notify`, to the user's own room (`user:<id>`). */
 export type Notify = { type: 'live'; stream: StreamInfo };
+
+/** A channel's subscription tier (seeded, 3 per channel; no tier editor in the prototype). */
+export type SubTierInfo = { id: string; name: string; displayPrice: string; perks: string; rank: number };
+
+/** GET /api/channels/:id/tiers: the tiers plus the caller's active subscription, if any. */
+export type TiersResponse = { tiers: SubTierInfo[]; mySub: { tierId: string; since: string } | null };
+
+export const SubscribeBody = z.object({ tierId: z.string().min(1) });

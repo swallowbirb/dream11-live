@@ -383,8 +383,8 @@ All paths are served under `/api` (the web app proxies it to the server).
 | POST | `/streams/:id/clips` | create clip |
 | GET | `/channels/:id/clips`, `/matches/:id/clips` | list clips |
 | POST | `/streams/:id/polls`, `/polls/:id/close` | polls |
-| GET/PUT | `/channels/:id/tiers` | subscription tiers |
-| POST/DELETE | `/channels/:id/subscribe` | mock subscribe / cancel |
+| GET/PUT | `/channels/:id/tiers` | subscription tiers + the caller's active sub (GET only in the prototype: tiers are seeded) |
+| POST/DELETE | `/channels/:id/subscribe` | mock subscribe (`{ tierId }`, replaces any active sub) / cancel |
 | GET | `/channels/:id/subscribers` | creator only |
 | PUT | `/channels/:id/mod-settings` | slow mode, sub/follower-only, word list |
 | POST/DELETE | `/channels/:id/moderators/:userId` | promote / demote |
@@ -402,7 +402,7 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | C→S | `room:join` / `room:leave` | `streamId` |
 | C→S | `chat:send` | `streamId, body, teamBadge` |
 | S→C | `chat:history` | `streamId`, last 50 messages (sent to the joiner) |
-| S→C | `chat:message` | `streamId`, message + user badges |
+| S→C | `chat:message` | `streamId`, message + user (`id`, `name`, `isCreator`, `isSub`) |
 | S→C | `chat:deleted` | `messageId` |
 | S→C | `chat:rejected` | `reason` (slow mode, banned, filtered…) |
 | C→S | `reaction:batch` | `streamId`, `counts` `{ emoji: count }` |

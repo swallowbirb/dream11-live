@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { LoginBody, SignupBody, type PublicUser } from '@d11/shared';
 import { prisma } from './db';
+import { DEFAULT_TIERS } from './tiers';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -46,7 +47,7 @@ export async function authRoutes(app: FastifyInstance) {
         name,
         role,
         passwordHash: await bcrypt.hash(password, 10),
-        ...(role === 'creator' ? { channel: { create: { displayName: name } } } : {}),
+        ...(role === 'creator' ? { channel: { create: { displayName: name, subTiers: { create: DEFAULT_TIERS } } } } : {}),
       },
     });
     const token = await startSession(user.id);

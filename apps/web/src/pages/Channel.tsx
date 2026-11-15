@@ -6,6 +6,7 @@ import { UserAvatar } from '@/components/Header';
 import { LivePill } from '@/components/LivePill';
 import { StreamCard } from '@/components/browse/StreamCard';
 import { FollowButton } from '@/components/channel/FollowButton';
+import { SubscribeButton } from '@/components/channel/Subscribe';
 import { BROWSE_REFRESH_MS, Section } from '@/pages/Home';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
@@ -32,7 +33,10 @@ export function ChannelPage() {
       Go to dashboard
     </Link>
   ) : (
-    <FollowButton channel={c} />
+    <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
+      <FollowButton channel={c} />
+      <SubscribeButton channel={c} />
+    </div>
   );
 
   return (
@@ -54,7 +58,7 @@ export function ChannelPage() {
             </div>
             <div className="hidden sm:block">{action}</div>
           </div>
-          <div className="mt-4 sm:hidden [&>*]:w-full">{action}</div>
+          <div className="mt-4 sm:hidden">{action}</div>
         </div>
         {(c.bio || c.tags.length > 0 || c.favouriteTeam) && (
           <div className="space-y-2 border-t px-5 py-4">

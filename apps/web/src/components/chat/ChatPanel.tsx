@@ -4,6 +4,7 @@ import { flag, type ChatMessage, type MatchSummary } from '@d11/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { SubBadge } from '@/components/channel/Subscribe';
 
 // Stable per-name colour so chat reads like Twitch.
 const NAME_COLOURS = ['#d11f26', '#1e7bd1', '#1e9e4a', '#8a3ffc', '#d1741f', '#c2185b', '#00897b', '#5d4037'];
@@ -20,6 +21,11 @@ function Line({ m }: { m: ChatMessage }) {
         >
           <Video className="mr-0.5 size-2.5" />
           CREATOR
+        </span>
+      )}
+      {m.user.isSub && (
+        <span className="mr-1">
+          <SubBadge />
         </span>
       )}
       {m.teamBadge && <span className="mr-1" title={m.teamBadge}>{flag(m.teamBadge)}</span>}

@@ -7,6 +7,7 @@ import { setupRealtime } from './realtime';
 import { replayRoutes } from './feed/routes';
 import { pollRoutes } from './polls';
 import { channelRoutes } from './channels';
+import { subRoutes } from './subs';
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -20,6 +21,7 @@ app.get('/api/health', async () => {
 await app.register(authRoutes);
 await app.register(streamRoutes);
 await app.register(channelRoutes);
+await app.register(subRoutes);
 
 // Socket.IO shares Fastify's HTTP server, so web only needs one proxy target.
 const io = new Server(app.server, { path: '/socket.io' });

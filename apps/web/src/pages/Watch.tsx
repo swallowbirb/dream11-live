@@ -16,6 +16,7 @@ import { PollCard } from '@/components/poll/PollCard';
 import { EmojiTray, HypeMeter, ReactionOverlay } from '@/components/player/Reactions';
 import { api } from '@/lib/api';
 import { FollowButton } from '@/components/channel/FollowButton';
+import { SubscribeButton } from '@/components/channel/Subscribe';
 import { useChannel } from '@/pages/Channel';
 
 export function WatchPage() {
@@ -85,7 +86,7 @@ export function WatchPage() {
 
         {live && score && <Scorecard score={score} />}
 
-        <div className="flex items-start gap-3 rounded-2xl bg-surface p-4 shadow-sm">
+        <div className="flex flex-wrap items-start gap-3 rounded-2xl bg-surface p-4 shadow-sm">
           <UserAvatar name={stream.channel.displayName} className="size-11" />
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -112,7 +113,12 @@ export function WatchPage() {
               )}
             </div>
           </div>
-          {channel && <FollowButton channel={channel} className="shrink-0" />}
+          {channel && (
+            <div className="flex w-full gap-2 sm:w-auto sm:shrink-0 [&>*]:flex-1 sm:[&>*]:flex-none">
+              <FollowButton channel={channel} />
+              <SubscribeButton channel={channel} />
+            </div>
+          )}
         </div>
       </div>
       <ChatPanel
