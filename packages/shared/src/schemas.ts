@@ -48,7 +48,30 @@ export type MatchSummary = {
   teamB: string;
   status: 'upcoming' | 'live' | 'completed';
   startsAt: string;
+  /** Live score from the match feed; null before the first ball. */
+  score: Score | null;
 };
+
+export type BatterLine = { name: string; runs: number; balls: number; onStrike: boolean };
+export type BowlerLine = { name: string; overs: string; runs: number; wickets: number };
+
+/** One innings' live score, as the MatchFeed produces it (stored in matches.scoreJson). */
+export type Score = {
+  batting: string;
+  bowling: string;
+  runs: number;
+  wickets: number;
+  /** Completed overs and legal balls, e.g. "12.3". */
+  overs: string;
+  batters: BatterLine[];
+  bowler: BowlerLine | null;
+  /** Last 6 deliveries, oldest first: ".", "1"–"6", "W", "wd", "nb". */
+  recent: string[];
+  finished: boolean;
+};
+
+/** S→C `score:update`, sent to every live stream room linked to the match. */
+export type ScoreUpdate = { matchId: string; score: Score };
 
 export type StreamInfo = {
   id: string;

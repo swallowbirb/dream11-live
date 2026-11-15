@@ -37,7 +37,7 @@ const matches = [
     teamB: 'AUS',
     startsAt: new Date(Date.now() - 60 * 60 * 1000),
     status: 'live',
-    scoreJson: JSON.stringify({ batting: 'IND', runs: 0, wickets: 0, overs: '0.0' }),
+    scoreJson: '{}', // the ReplayFeed fills it (pnpm replay start)
   },
   {
     externalId: 'seed-eng-nz',

@@ -6,7 +6,8 @@
     "dev": "tsx watch --env-file=.env src/index.ts",
     "typecheck": "tsc -p .",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx --env-file=.env prisma/seed.ts"
+    "db:seed": "tsx --env-file=.env prisma/seed.ts",
+    "replay": "node scripts/replay.mjs"
   },
   "dependencies": {
     "@d11/shared": "workspace:^",

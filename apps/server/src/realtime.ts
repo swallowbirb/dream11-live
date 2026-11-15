@@ -5,7 +5,7 @@ import { prisma } from './db';
 import { userForToken } from './auth';
 
 type SocketUser = NonNullable<Awaited<ReturnType<typeof userForToken>>>;
-const roomOf = (streamId: string) => `stream:${streamId}`;
+export const roomOf = (streamId: string) => `stream:${streamId}`;
 
 // streamId → the streamer's user id (for the creator badge and the viewer count). Streams never change owner.
 const ownerCache = new Map<string, string | null>();

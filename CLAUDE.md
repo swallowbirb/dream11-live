@@ -65,8 +65,14 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
   as TS source, no build step). `spike/` is not in the workspace.
   - `pnpm install` at the root installs everything.
   - `pnpm dev` runs both: web http://localhost:5173 (proxies `/api` and `/socket.io` to the server), server
-    http://localhost:3001. Run it in the background with `setsid … &` and stop it with `kill -- -<pid>` (kills
-    the process group, both apps).
+    http://localhost:3001. Run it in the background in its own process group and stop it with `kill -- -<pgid>`
+    (both apps). `$!` after `setsid pnpm dev &` is **not** the group id (setsid forks when it's already a group
+    leader), so record it from inside:
+    `setsid bash -c 'echo $$ > "$PIDFILE"; exec ~/.local/bin/pnpm dev' > "$LOG" 2>&1 &`, then
+    `kill -- -$(cat "$PIDFILE")`.
+  - `pnpm replay [start [speed] | stop | status]` (server must be running): plays
+    `apps/server/replays/ind-aus.json` ball by ball on the seeded IND vs AUS match. Speed is a multiple of real
+    time (≈30 s a ball): default 10 (3 s a ball), 300 for a 4-second check run. Start restarts from ball 0.
   - `pnpm typecheck`: `tsc` in all three packages. This is the check.
   - `pnpm db:migrate` (`prisma migrate dev`, after editing `apps/server/prisma/schema.prisma`), `pnpm db:seed`
     (`apps/server/prisma/seed.ts`, upserts, safe to re-run). The DB is `apps/server/prisma/dev.db` (gitignored).

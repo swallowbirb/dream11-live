@@ -6,7 +6,8 @@
     "dev": "pnpm --parallel --filter server --filter web dev",
     "typecheck": "pnpm -r typecheck",
     "db:migrate": "pnpm --filter server db:migrate",
-    "db:seed": "pnpm --filter server db:seed"
+    "db:seed": "pnpm --filter server db:seed",
+    "replay": "pnpm --filter server replay"
   },
   "packageManager": "pnpm@9.15.9"
 }

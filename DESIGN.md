@@ -390,6 +390,8 @@ All paths are served under `/api` (the web app proxies it to the server).
 | POST/DELETE | `/channels/:id/moderators/:userId` | promote / demote |
 | POST/DELETE | `/channels/:id/bans/:userId` | ban or timeout / unban |
 | GET | `/notifications` | list; mark read |
+| GET | `/replay` | ReplayFeed status (prototype, no auth) |
+| POST | `/replay/start`, `/replay/stop` | start (from ball 0, `{ speed }`) or stop the replay |
 
 ### WebSocket events
 
@@ -407,7 +409,7 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | S→C | `reaction:burst` | totals per emoji + hype level |
 | S→C | `poll:update` | poll state + counts |
 | C→S | `poll:vote` | `pollId, optionIndex` |
-| S→C | `score:update` | match score |
+| S→C | `score:update` | `matchId`, `score` (runs, wickets, overs, batters, bowler, last 6 balls) |
 | S→C | `stream:status` | `streamId`, viewer count (sockets in the room minus the streamer) |
 | S→C | `notify` | go-live and other notifications |
 | C→S | `mod:action` | delete / timeout / ban, target |

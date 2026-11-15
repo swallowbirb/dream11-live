@@ -1,0 +1,15 @@
+{
+  "externalId": "seed-ind-aus",
+  "tournament": "Border-Gavaskar T20 Series",
+  "batting": "IND",
+  "bowling": "AUS",
+  "batters": ["Rohit Sharma", "Shubman Gill", "Virat Kohli", "Suryakumar Yadav", "Hardik Pandya", "Rishabh Pant", "Ravindra Jadeja"],
+  "overs": [
+    { "bowler": "Mitchell Starc", "balls": ". 1 4 . . 6" },
+    { "bowler": "Josh Hazlewood", "balls": "1 . wd 4 . 1 W" },
+    { "bowler": "Pat Cummins", "balls": "4 4 . 1 nb 6 ." },
+    { "bowler": "Adam Zampa", "balls": ". 1 1 W . 2" },
+    { "bowler": "Mitchell Starc", "balls": "6 . 4 1 . 1" },
+    { "bowler": "Josh Hazlewood", "balls": "1 2 . W 4 6" }
+  ]
+}

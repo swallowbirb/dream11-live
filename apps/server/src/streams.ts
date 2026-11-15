@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { GoLiveBody, type MatchSummary, type StreamInfo } from '@d11/shared';
+import { GoLiveBody, type MatchSummary, type Score, type StreamInfo } from '@d11/shared';
 import type { Match, Stream, Channel } from '@prisma/client';
 import { prisma } from './db';
 import { requireUser } from './auth';
@@ -14,7 +14,14 @@ export const toMatch = (m: Match): MatchSummary => ({
   teamB: m.teamB,
   status: m.status as MatchSummary['status'],
   startsAt: m.startsAt.toISOString(),
+  score: parseScore(m.scoreJson),
 });
+
+// scoreJson is "{}" until the feed writes the first ball.
+function parseScore(json: string): Score | null {
+  const s = JSON.parse(json || '{}');
+  return Array.isArray(s.batters) ? (s as Score) : null;
+}
 
 export const toStream = (s: Stream & { channel: Channel; match: Match | null }): StreamInfo => ({
   id: s.id,

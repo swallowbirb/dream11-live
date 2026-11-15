@@ -11,11 +11,11 @@ Anything new goes to `plan.md` §8. Verify headless (Playwright from `spike/node
 
 ## Status (update at the end of every phase)
 
-**Next up: P1 ReplayFeed + matches.**
+**Next up: P2 Browse pages + scorecard.**
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |
-| P1 ReplayFeed + matches | not started | |
+| P1 ReplayFeed + matches | done (2026-11-15) | Shared: `Score` (batting/bowling, runs, wickets, overs `"6.0"`, `batters` [striker first, `onStrike`], `bowler`, `recent` last 6 tokens, `finished`), `BatterLine`, `BowlerLine`, `ScoreUpdate` `{ matchId, score }`; `MatchSummary.score` is `Score \| null` (`parseScore` in `src/streams.ts` returns null for `"{}"` or old seed shapes). Server: `src/feed/feed.ts` (`MatchFeed`, `FeedStatus`, `OnScore`), `src/feed/replay.ts` (`ReplayFeed` + `Innings` scoring: odd runs and end of over swap strike, `W` brings the next batter in on strike, `wd`/`nb` +1 and not legal), `src/feed/routes.ts` (`GET /api/replay`, `POST /api/replay/start {speed}`, `POST /api/replay/stop`; fans `score:update` out to rooms of live streams on the match). `roomOf` is now exported from `src/realtime.ts`. Data: `apps/server/replays/ind-aus.json` (6 overs, 38 deliveries, ends 63/3), matched to the seed by `externalId`. Start writes the 0/0 score and sets the match `live`; the last ball sets `completed`. Feed state is in memory: a server restart (incl. `tsx watch` reloads) stops the replay, and the DB keeps the last score. Seed now writes `scoreJson: '{}'`. Verified headless (node + socket.io-client): a viewer socket in a live IND vs AUS stream got all 39 updates (start + 38 balls), final 63/3 (6.0) as computed by hand, `GET /api/matches` shows it `completed`, ENG vs NZ untouched, stop mid-innings stays stopped. Not done here: no match socket room (P2 refetches), the player doesn't show the score yet (P2). |
 | P2 Browse pages + scorecard | not started | |
 | P3 Reactions | not started | |
 | P4 Polls | not started | |
