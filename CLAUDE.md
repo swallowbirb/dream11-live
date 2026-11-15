@@ -37,12 +37,31 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
   it in the same piece of work.
 - **Stuck process:** if a dev server, app or tool looks hung, stop sending it commands, tell the user, and
   wait for them to say continue.
+- **Phase handoff: update the docs at the end of every phase**, before the final commit, so the next phase can
+  start in a fresh chat with no context:
+  1. The current module's phase file in `plans/` (e.g. `plans/m1-live-core.md`): set the phase's row in its
+     **Status** table to done with the date, write short handoff notes (what exists, where, gotchas found,
+     anything cut or changed from the plan), and update the **Next up** line.
+  2. `plan.md` §9 when a whole step is done; §6/§7 if something was cut; §8 for new ideas.
+  3. This file's **Commands** section if a command was added or changed.
+  4. `DESIGN.md` if scope, architecture, the data model or the API changed.
+- **Starting a phase in a new chat:** read this file, then the current module's phase file in `plans/` (its
+  Status table says what's next), then do that phase only.
+- **Verify it yourself.** Don't ask the user to click through browsers. Run the check headless with Playwright
+  (Chromium with a fake camera and mic), the way `spike/check.mjs` does, and look at its screenshot.
 
 ## Commands
 
-TODO: fill in during `plan.md` M1 S1 (scaffold): install, dev server, build, typecheck, test (all, and a
-single file). Stack: pnpm monorepo, `apps/web` (Vite + React), `apps/server` (Fastify + Socket.IO + Prisma on
-SQLite), `packages/shared`.
+- **pnpm** is in `~/.local/bin` (pnpm 9; there is no corepack on this machine).
+- **LiveKit keys:** `spike/.env` (gitignored; `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, project
+  "Dream12" on LiveKit Cloud). Never print the secret.
+- **Spike (`spike/`):** `pnpm start` serves http://localhost:5180 (`?role=publisher` / `?role=viewer`).
+  `pnpm media` generates `test-media/match.webm` (WebM, since Playwright's Chromium can't play H.264).
+  `pnpm check` runs the headless publish → watch check against a running `pnpm start` and writes
+  `test-media/viewer.png`. Stop a background server by its PID, not `pkill -f` (it matches its own shell).
+
+TODO: the rest is filled in during M1 P2 (scaffold): install, dev server, build, typecheck. Stack: pnpm monorepo,
+`apps/web` (Vite + React), `apps/server` (Fastify + Socket.IO + Prisma on SQLite), `packages/shared`.
 
 ## Build and typecheck
 
