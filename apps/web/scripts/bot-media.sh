@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Placeholder clips for the bot streams (apps/web/public/bots/). Replace any of them with real footage under the
 # same name: WebM (VP9 + Opus) plays everywhere the app runs, including Playwright's Chromium (no H.264 there).
-#   match-ind-aus.webm, match-eng-nz.webm  main video + match audio (crowd)
-#   cam-1.webm … cam-6.webm                 facecam + creator audio
+#   match-1.webm … match-6.webm  main video + match audio (crowd) of bot streams 1–6
+#   cam-1.webm … cam-6.webm      facecam + creator audio
+# Real footage: apps/web/scripts/import-bot-clips.sh converts and names it.
 # Loops: any length works (the player loops each file and starts every bot at a different point).
 set -euo pipefail
 OUT="$(dirname "$0")/../public/bots"
@@ -28,8 +29,8 @@ cam() { # n, initials, colour
     -t 12 "${q[@]}" "$OUT/cam-$1.webm"
 }
 
-match match-ind-aus 'IND vs AUS  ·  T20'
-match match-eng-nz 'ENG vs NZ  ·  pre-match'
+for i in 1 2 3 4; do match match-$i 'IND vs AUS  ·  T20'; done
+for i in 5 6; do match match-$i 'ENG vs NZ  ·  pre-match'; done
 cam 1 HH 0x8e1b1b
 cam 2 BB 0x1b4f8e
 cam 3 SS 0x5a1b8e

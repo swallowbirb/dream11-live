@@ -81,8 +81,9 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
   - **Demo bots** (DESIGN §5.6): on by default, the server keeps 6 bot creator streams live and starts the
     replay itself, looping (`REPLAY_SPEED`, default 6 = 5 s a ball). `BOTS=0` turns both off. The personas,
     chat lines and polls are in `apps/server/src/bots/script.ts`. Clips are in `apps/web/public/bots/`.
-    `apps/web/scripts/bot-media.sh` regenerates the placeholder clips; swap in real WebM footage under the same
-    names.
+    Bot N plays `match-N.webm` + `cam-N.webm`. `apps/web/scripts/import-bot-clips.sh <folder>` converts real
+    footage named `match-1…6` / `cam-1…6` (any format) into them; `apps/web/scripts/bot-media.sh` regenerates
+    placeholders.
   - `pnpm db:migrate` (`prisma migrate dev`, after editing `apps/server/prisma/schema.prisma`), `pnpm db:seed`
     (`apps/server/prisma/seed.ts`, upserts, safe to re-run). The DB is `apps/server/prisma/dev.db` (gitignored).
   - **Seed users** (password `pass` for all): creators `RohitReacts`, `AussieAnalyst`, `CoverDriveComedy`;

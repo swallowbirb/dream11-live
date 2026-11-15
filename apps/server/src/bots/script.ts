@@ -1,5 +1,6 @@
 // Who the demo bots are and what they say. Templates: {striker} {bowler} {score} {team} {other}.
-// Clips live in apps/web/public/bots/ (placeholders from apps/web/scripts/bot-media.sh).
+// Clips live in apps/web/public/bots/: match-N + cam-N for the Nth persona. Real footage goes in with
+// apps/web/scripts/import-bot-clips.sh; apps/web/scripts/bot-media.sh makes placeholders.
 
 type Event = 'six' | 'four' | 'wicket' | 'extra' | 'dot';
 
@@ -28,7 +29,7 @@ export const PERSONAS: Persona[] = [
     match: 'seed-ind-aus',
     title: 'IND vs AUS LIVE 🔥 Hindi watch-along, full josh!',
     language: 'Hindi',
-    clip: 'match-ind-aus.webm',
+    clip: 'match-1.webm',
     cam: 'cam-1.webm',
     audience: [2400, 3600],
     chat: ['Chat full josh mein hai aaj 🔥', 'Follow kar lo doston, kal bhi live hain', 'Kya scene hai bhai, {score}!', 'Subs ka shukriya ❤️'],
@@ -42,7 +43,7 @@ export const PERSONAS: Persona[] = [
     match: 'seed-ind-aus',
     title: 'IND v AUS | Ball-by-ball tactics + live field maps',
     language: 'English',
-    clip: 'match-ind-aus.webm',
+    clip: 'match-2.webm',
     cam: 'cam-2.webm',
     audience: [900, 1500],
     chat: ['Watch where {bowler} sets the fine leg here', 'Run rate check: {score}, very healthy for {team}', 'Thanks for the subs legends 🙌', 'Poll ideas welcome in chat'],
@@ -56,7 +57,7 @@ export const PERSONAS: Persona[] = [
     match: 'seed-ind-aus',
     title: 'Spin & strategy: IND vs AUS deep dive',
     language: 'English',
-    clip: 'match-ind-aus.webm',
+    clip: 'match-3.webm',
     cam: 'cam-3.webm',
     audience: [600, 1100],
     chat: ['{striker} using the crease beautifully', 'Keep an eye on the wrist position from {bowler}', 'Welcome in everyone, grab a chai ☕'],
@@ -70,7 +71,7 @@ export const PERSONAS: Persona[] = [
     match: 'seed-ind-aus',
     title: 'IND vs AUS but it’s just memes 😂',
     language: 'English',
-    clip: 'match-ind-aus.webm',
+    clip: 'match-4.webm',
     cam: 'cam-4.webm',
     audience: [1300, 2200],
     chat: ['Me pretending to understand DRS 😂', 'Chat, who has the meme for this', 'Okay that bowler’s run-up is a whole cardio session'],
@@ -84,7 +85,7 @@ export const PERSONAS: Persona[] = [
     match: 'seed-eng-nz',
     title: 'ENG v NZ build-up | team news, predictions, songs',
     language: 'English',
-    clip: 'match-eng-nz.webm',
+    clip: 'match-5.webm',
     cam: 'cam-5.webm',
     audience: [500, 900],
     chat: ['Team sheets any minute now 👀', 'Predictions in chat please', 'Who’s staying up for this one?'],
@@ -98,7 +99,7 @@ export const PERSONAS: Persona[] = [
     match: 'seed-eng-nz',
     title: 'ENG v NZ pre-match: pitch report & XI talk',
     language: 'English',
-    clip: 'match-eng-nz.webm',
+    clip: 'match-6.webm',
     cam: 'cam-6.webm',
     audience: [350, 700],
     chat: ['Surface looks a bit tacky, spinners in play', 'Toss could decide this', 'Kia ora chat 👋'],
