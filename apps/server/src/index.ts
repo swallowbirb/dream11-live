@@ -21,6 +21,27 @@ const REPLAY_SPEED = Number(process.env.REPLAY_SPEED ?? 6); // 5 s a ball
 
 const app = Fastify({ logger: { level: 'info' } });
 
+// CORS for a web app hosted elsewhere (e.g. Vercel). CORS_ORIGIN = comma list, `*` wildcards allowed
+// ("https://*.vercel.app"). Auth is a Bearer token, not a cookie, so no credentials mode is needed.
+const corsOrigins = (process.env.CORS_ORIGIN ?? '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+  .map((o) => new RegExp(`^${o.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')}$`));
+const allowed = (origin?: string) => !!origin && corsOrigins.some((r) => r.test(origin));
+app.addHook('onRequest', async (req, reply) => {
+  const origin = req.headers.origin;
+  if (!allowed(origin)) return;
+  reply.header('Access-Control-Allow-Origin', origin).header('Vary', 'Origin');
+  if (req.method === 'OPTIONS') {
+    reply
+      .header('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS')
+      .header('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+      .header('Access-Control-Max-Age', '86400');
+    return reply.code(204).send();
+  }
+});
+
 app.get('/api/health', async () => {
   const [users, matches] = await Promise.all([prisma.user.count(), prisma.match.count()]);
   return { ok: true, time: new Date().toISOString(), db: { users, matches } };
@@ -32,7 +53,7 @@ await app.register(channelRoutes);
 await app.register(subRoutes);
 
 // Socket.IO shares Fastify's HTTP server, so web only needs one proxy target.
-const io = new Server(app.server, { path: '/socket.io' });
+const io = new Server(app.server, { path: '/socket.io', cors: { origin: (o, cb) => cb(null, !o || allowed(o)) } });
 setupRealtime(io);
 const bots = BOTS ? new BotDirector(io) : null;
 const fanOut = scoreFanOut(io);

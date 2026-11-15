@@ -6,6 +6,8 @@ services:
     plan: free
     healthCheckPath: /api/health
     envVars:
+      - key: CORS_ORIGIN # the Vercel-hosted web app
+        value: https://*.vercel.app
       - key: LIVEKIT_URL
         sync: false
       - key: LIVEKIT_API_KEY

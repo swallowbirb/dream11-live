@@ -78,6 +78,10 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
     the seed (upserts) and the server, which also serves `apps/web/dist` with an SPA fallback on the same origin
     (no CORS). Needs `PORT`, `DATABASE_URL` (SQLite file on a persistent disk), `LIVEKIT_*` from the environment.
     `SITE=https://… pnpm replay` drives the replay on a deployed site (replay routes have no auth).
+  - **Deploy (Vercel web + Render server):** `vercel.json` (root) builds `apps/web` and serves it as an SPA. Set
+    `VITE_API_URL` in Vercel to the server's URL (build time; empty = same origin). The server allows the origins in
+    `CORS_ORIGIN` (comma list, `*` wildcards; `render.yaml` sets `https://*.vercel.app`). Bot clips are served by the
+    web app (`/bots/…`), so they work on Vercel alone.
   - **Deploy (Render):** `Dockerfile` (one container: install, `prisma generate`, web build, `pnpm start`) +
     `render.yaml` (Blueprint, free web service, health check `/api/health`; the three `LIVEKIT_*` values are entered
     in Render). Test locally: `podman build -t dream11-live .` then

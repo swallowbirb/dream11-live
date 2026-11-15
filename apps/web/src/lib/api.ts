@@ -1,9 +1,10 @@
 import { useSession } from './session';
+import { API_URL } from './config';
 
 // Fetch helper for the same-origin API (Vite proxies /api to the server). Adds the session token.
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const token = useSession.getState().token;
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${API_URL}/api${path}`, {
     ...init,
     headers: {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
