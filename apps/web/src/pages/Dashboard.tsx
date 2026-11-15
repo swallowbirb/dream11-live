@@ -138,11 +138,13 @@ export function DashboardPage() {
 
   const end = useMutation({
     mutationFn: async () => {
+      // Mark ended before leaving the room: viewers refetch the stream when the creator leaves.
+      const ended = (await post<{ stream: StreamInfo }>(`/streams/${stream!.id}/end`)).stream;
       // Unpublish without stopping the local camera/mic tracks, so the preview stays on.
       await room.current?.disconnect(false);
       room.current = null;
       fileVideo.current?.pause();
-      return (await post<{ stream: StreamInfo }>(`/streams/${stream!.id}/end`)).stream;
+      return ended;
     },
     onSuccess: (s) => {
       setStream(s);

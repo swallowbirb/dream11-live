@@ -1,0 +1,78 @@
+import { Link, useParams } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { MonitorOff } from 'lucide-react';
+import { flag, type StreamInfo, type StreamToken } from '@d11/shared';
+import { UserAvatar } from '@/components/Header';
+import { LivePill } from '@/components/LivePill';
+import { LivePlayer } from '@/components/player/LivePlayer';
+import { api } from '@/lib/api';
+
+export function WatchPage() {
+  const { streamId } = useParams();
+  const qc = useQueryClient();
+  const { data, isPending } = useQuery({
+    queryKey: ['stream', streamId],
+    queryFn: () => api<{ stream: StreamInfo }>(`/streams/${streamId}`),
+  });
+  const stream = data?.stream;
+  const live = stream?.status === 'live';
+  const { data: tok } = useQuery({
+    queryKey: ['stream-token', streamId],
+    queryFn: () => api<StreamToken>(`/streams/${streamId}/token`),
+    enabled: live,
+    staleTime: Infinity,
+  });
+
+  if (isPending) return <div className="aspect-video animate-pulse rounded-2xl bg-muted" />;
+  if (!stream) return <p className="text-muted-foreground">Stream not found.</p>;
+
+  return (
+    <div className="space-y-4">
+      {live && tok ? (
+        <LivePlayer
+          url={tok.url}
+          token={tok.token}
+          onPublisherLeft={() => qc.invalidateQueries({ queryKey: ['stream', streamId] })}
+        />
+      ) : live ? (
+        <div className="aspect-video animate-pulse rounded-2xl bg-ink/80" />
+      ) : (
+        <div className="grid aspect-video place-items-center rounded-2xl bg-gradient-to-br from-ink to-[#3a3a3a] text-center text-white">
+          <div className="space-y-2 px-6">
+            <MonitorOff className="mx-auto size-10 opacity-70" />
+            <p className="font-display text-2xl font-bold">{stream.channel.displayName} is offline</p>
+            <p className="text-sm text-white/60">This stream has ended. Follow to catch the next one.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-start gap-3 rounded-2xl bg-surface p-4 shadow-sm">
+        <UserAvatar name={stream.channel.displayName} className="size-11" />
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            {live && <LivePill />}
+            <h1 className="truncate text-xl font-bold leading-tight" data-testid="stream-title">
+              {stream.title}
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <Link to={`/c/${stream.channel.id}`} className="font-semibold text-foreground hover:text-brand">
+              {stream.channel.displayName}
+            </Link>
+            {stream.match && (
+              <Link to={`/matches/${stream.match.id}`} className="hover:text-brand">
+                {flag(stream.match.teamA)} {stream.match.teamA} vs {stream.match.teamB} {flag(stream.match.teamB)}
+              </Link>
+            )}
+            <span>{stream.language}</span>
+            {stream.supportingTeam && (
+              <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">
+                Supporting {flag(stream.supportingTeam)} {stream.supportingTeam}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
