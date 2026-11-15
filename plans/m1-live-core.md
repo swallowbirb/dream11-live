@@ -9,7 +9,7 @@ Anything new goes to `plan.md` §8.
 
 ## Status (update at the end of every phase)
 
-**Module 1 is done (2026-11-15). Next up: Module 2 (Cricket + hype).** Its phase file `plans/m2-cricket-hype.md` doesn't exist yet: the next chat writes it from `plan.md` §4 Module 2 (same format as this file), then does its P1.
+**Module 1 is done (2026-11-15). Next up: Module 2 (Cricket + hype)** in [`plans/m2-cricket-hype.md`](m2-cricket-hype.md).
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |
