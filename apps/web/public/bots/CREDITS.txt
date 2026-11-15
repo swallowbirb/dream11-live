@@ -1,0 +1,15 @@
+Bot stream clips, from Pixabay (https://pixabay.com/service/license-summary/: free to use, no attribution
+required). Converted by apps/web/scripts/import-bot-clips.sh. Slot, Pixabay page, uploader:
+
+match-1  https://pixabay.com/videos/id-189868/  (RisingStudio07)
+match-2  https://pixabay.com/videos/id-139865/  (onlineworkssv)
+match-3  https://pixabay.com/videos/id-39549/  (CarryVix)
+match-4  https://pixabay.com/videos/id-138868/  (MuneerKhan92)
+match-5  https://pixabay.com/videos/id-189845/  (Radds)
+match-6  https://pixabay.com/videos/id-281621/  (PatternsWorld)
+cam-1  https://pixabay.com/videos/id-82130/  (sachinsingh40381)
+cam-2  https://pixabay.com/videos/id-203252/  (conte_public)
+cam-3  https://pixabay.com/videos/id-45283/  (Engin_Akyurt)
+cam-4  https://pixabay.com/videos/id-37799/  (8682001)
+cam-5  https://pixabay.com/videos/id-47813/  (8682001)
+cam-6  https://pixabay.com/videos/id-122389/  (u_n92ynpt32e)
