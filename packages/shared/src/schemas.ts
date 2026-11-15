@@ -85,6 +85,12 @@ export type StreamInfo = {
   match: MatchSummary | null;
 };
 
+/** A match on browse pages, with how many creators are live on it. */
+export type MatchListItem = MatchSummary & { liveCount: number };
+
+/** A live stream on browse pages (viewerCount from the socket room, like stream:status). */
+export type LiveStream = StreamInfo & { viewerCount: number };
+
 /** Returned by POST /api/streams and GET /api/streams/:id/token. */
 export type StreamToken = { url: string; token: string };
 

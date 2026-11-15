@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { EV, type ChatMessage, type StreamStatus } from '@d11/shared';
+import { EV, type ChatMessage, type Score, type ScoreUpdate, type StreamStatus } from '@d11/shared';
 import { getSocket } from '@/lib/socket';
 
-/** Joins a stream's socket room: chat history + live messages, viewer count, send. */
+/** Joins a stream's socket room: chat history + live messages, viewer count, live score, send. */
 export function useStreamRoom(streamId: string | undefined) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
+  const [score, setScore] = useState<Score | null>(null);
 
   useEffect(() => {
     if (!streamId) return;
@@ -16,6 +17,8 @@ export function useStreamRoom(streamId: string | undefined) {
     const onMessage = (p: { streamId: string; message: ChatMessage }) =>
       p.streamId === streamId && setMessages((m) => [...m.slice(-199), p.message]);
     const onStatus = (p: StreamStatus) => p.streamId === streamId && setViewerCount(p.viewerCount);
+    // score:update only reaches rooms of streams on that match, so no matchId filter is needed.
+    const onScore = (p: ScoreUpdate) => setScore(p.score);
     const onRejected = (p: { reason: string }) => toast.error(p.reason);
     const join = () => s.emit(EV.roomJoin, streamId);
 
@@ -23,6 +26,7 @@ export function useStreamRoom(streamId: string | undefined) {
     s.on(EV.chatMessage, onMessage);
     s.on(EV.streamStatus, onStatus);
     s.on(EV.chatRejected, onRejected);
+    s.on(EV.scoreUpdate, onScore);
     s.on('connect', join); // also re-joins after a reconnect
     if (s.connected) join();
     return () => {
@@ -31,6 +35,7 @@ export function useStreamRoom(streamId: string | undefined) {
       s.off(EV.chatMessage, onMessage);
       s.off(EV.streamStatus, onStatus);
       s.off(EV.chatRejected, onRejected);
+      s.off(EV.scoreUpdate, onScore);
       s.off('connect', join);
     };
   }, [streamId]);
@@ -40,5 +45,5 @@ export function useStreamRoom(streamId: string | undefined) {
     [streamId],
   );
 
-  return { messages, viewerCount, send };
+  return { messages, viewerCount, score, send };
 }

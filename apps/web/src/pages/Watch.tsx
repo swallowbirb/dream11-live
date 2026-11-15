@@ -5,6 +5,7 @@ import { flag, type StreamInfo, type StreamToken } from '@d11/shared';
 import { UserAvatar } from '@/components/Header';
 import { LivePill } from '@/components/LivePill';
 import { LivePlayer } from '@/components/player/LivePlayer';
+import { Scorecard } from '@/components/player/Scorecard';
 import { ViewerCount } from '@/components/ViewerCount';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
@@ -26,6 +27,8 @@ export function WatchPage() {
     enabled: live,
     staleTime: Infinity,
   });
+
+  const score = room.score ?? stream?.match?.score ?? null;
 
   if (isPending) return <div className="aspect-video animate-pulse rounded-2xl bg-muted" />;
   if (!stream) return <p className="text-muted-foreground">Stream not found.</p>;
@@ -50,6 +53,8 @@ export function WatchPage() {
             </div>
           </div>
         )}
+
+        {live && score && <Scorecard score={score} />}
 
         <div className="flex items-start gap-3 rounded-2xl bg-surface p-4 shadow-sm">
           <UserAvatar name={stream.channel.displayName} className="size-11" />

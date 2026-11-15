@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import { GoLiveBody, type MatchSummary, type Score, type StreamInfo } from '@d11/shared';
+import { GoLiveBody, type LiveStream, type MatchListItem, type MatchSummary, type Score, type StreamInfo } from '@d11/shared';
 import type { Match, Stream, Channel } from '@prisma/client';
 import { prisma } from './db';
 import { requireUser } from './auth';
 import { livekit } from './video/livekit';
+import { viewerCount } from './realtime';
 
 const video = livekit;
 
@@ -37,11 +38,39 @@ export const toStream = (s: Stream & { channel: Channel; match: Match | null }):
 
 const withRefs = { channel: true, match: true } as const;
 
+async function liveStreams(matchId?: string): Promise<LiveStream[]> {
+  const rows = await prisma.stream.findMany({
+    where: { status: 'live', ...(matchId && { matchId }) },
+    include: withRefs,
+    orderBy: { startedAt: 'desc' },
+  });
+  return rows
+    .map((s) => ({ ...toStream(s), viewerCount: viewerCount(s.id, s.channel.userId) }))
+    .sort((a, b) => b.viewerCount - a.viewerCount);
+}
+
 export async function streamRoutes(app: FastifyInstance) {
   app.get('/api/matches', async () => {
-    const matches = await prisma.match.findMany({ orderBy: { startsAt: 'asc' } });
-    return { matches: matches.map(toMatch) };
+    const [matches, counts] = await Promise.all([
+      prisma.match.findMany({ orderBy: { startsAt: 'asc' } }),
+      prisma.stream.groupBy({ by: ['matchId'], where: { status: 'live' }, _count: true }),
+    ]);
+    const live = new Map(counts.map((c) => [c.matchId, c._count]));
+    const list: MatchListItem[] = matches.map((m) => ({ ...toMatch(m), liveCount: live.get(m.id) ?? 0 }));
+    return { matches: list };
   });
+
+  app.get<{ Params: { id: string } }>('/api/matches/:id', async (req, reply) => {
+    const m = await prisma.match.findUnique({ where: { id: req.params.id } });
+    if (!m) return reply.code(404).send({ error: 'Match not found' });
+    const streams = await liveStreams(m.id);
+    const match: MatchListItem = { ...toMatch(m), liveCount: streams.length };
+    return { match, streams };
+  });
+
+  app.get<{ Querystring: { match?: string } }>('/api/streams/live', async (req) => ({
+    streams: await liveStreams(req.query.match),
+  }));
 
   // Go live: status is 'live' straight away (no webhook in the prototype).
   app.post('/api/streams', { preHandler: requireUser }, async (req, reply) => {

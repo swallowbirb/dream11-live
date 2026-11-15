@@ -25,7 +25,19 @@ const toMessage = (m: ChatRow & { user: Pick<User, 'id' | 'name'> }, ownerId: st
   createdAt: m.createdAt.toISOString(),
 });
 
+let ioRef: Server | null = null;
+
+/** Sockets in a stream's room minus the streamer's (same count as stream:status). For REST listings. */
+export function viewerCount(streamId: string, ownerUserId: string) {
+  const ids = ioRef?.sockets.adapter.rooms.get(roomOf(streamId));
+  if (!ids) return 0;
+  let n = 0;
+  for (const id of ids) if ((ioRef!.sockets.sockets.get(id)?.data.user as SocketUser | undefined)?.id !== ownerUserId) n++;
+  return n;
+}
+
 export function setupRealtime(io: Server) {
+  ioRef = io;
   async function broadcastCount(streamId: string) {
     const owner = await streamOwner(streamId);
     const sockets = await io.in(roomOf(streamId)).fetchSockets();

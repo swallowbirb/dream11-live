@@ -370,9 +370,9 @@ All paths are served under `/api` (the web app proxies it to the server).
 | POST | `/auth/signup` | name, password, role → session |
 | POST | `/auth/login` | name, password → session |
 | GET | `/me` | current user |
-| GET | `/matches?status=` | list matches |
+| GET | `/matches?status=` | list matches (with live creator count and score) |
 | GET | `/matches/:id` | match + live streams |
-| GET | `/streams/live?match=&lang=&style=` | browse live streams |
+| GET | `/streams/live?match=&lang=&style=` | browse live streams (with viewer count) |
 | GET | `/channels/:id` | channel page data |
 | POST/DELETE | `/channels/:id/follow` | follow / unfollow |
 | GET | `/me/following` | followed channels |
