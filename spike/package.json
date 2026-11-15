@@ -1,0 +1,12 @@
+{
+  "name": "livekit-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=.env server.mjs"
+  },
+  "dependencies": {
+    "livekit-client": "^2.24.1",
+    "livekit-server-sdk": "^2.19.3"
+  }
+}

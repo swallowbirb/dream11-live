@@ -156,7 +156,7 @@ New ideas that come up during the build go here, unbuilt.
 
 | Module | Step | Status |
 | --- | --- | --- |
-| M1 | S0 LiveKit spike | not started |
+| M1 | S0 LiveKit spike | built (`spike/`), live check pending keys |
 | M1 | S1 Scaffold | not started |
 | M1 | S2 Auth + shell | not started |
 | M1 | S3 Go live + watch | not started |

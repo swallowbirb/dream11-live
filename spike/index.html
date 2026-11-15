@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>LiveKit spike</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; margin: 16px; background: #f4f4f5; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+    .tile { background: #fff; border: 1px solid #e5e5e7; border-radius: 12px; padding: 8px; }
+    .tile b { display: block; margin-bottom: 4px; }
+    video { width: 480px; max-width: 100%; background: #000; border-radius: 8px; }
+    button { background: #d11f26; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+    #log { white-space: pre-wrap; font: 12px ui-monospace, monospace; background: #1b1b1b; color: #9f9; padding: 8px; border-radius: 8px; max-height: 260px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h2 id="heading">LiveKit spike</h2>
+  <p>
+    <a href="?role=publisher">Publisher</a> · <a href="?role=viewer">Viewer</a> · Use Chrome.
+  </p>
+
+  <div id="publisher" hidden>
+    <p>
+      Match file: <input type="file" id="file" accept="video/*" />
+      <button id="goLive">Go live (file + camera)</button>
+      <button id="end">End</button>
+    </p>
+    <div class="row">
+      <div class="tile"><b>Match file (published as screen_share + screen_share_audio)</b><video id="fileVideo" controls loop playsinline></video></div>
+      <div class="tile"><b>Camera preview</b><div id="camPreview"></div></div>
+    </div>
+  </div>
+
+  <div id="viewer" hidden>
+    <p><button id="join">Join and play audio</button></p>
+    <div class="row" id="remote"></div>
+    <p>
+      Match volume <input type="range" id="matchVol" min="0" max="1" step="0.05" value="1" />
+      Creator volume <input type="range" id="micVol" min="0" max="1" step="0.05" value="1" />
+    </p>
+  </div>
+
+  <h3>Log</h3>
+  <div id="log"></div>
+
+  <script type="module">
+    import { Room, RoomEvent, Track } from '/livekit-client.mjs';
+
+    const role = new URLSearchParams(location.search).get('role') ?? 'publisher';
+    const $ = (id) => document.getElementById(id);
+    const log = (...a) => { $('log').textContent += a.join(' ') + '\n'; console.log(...a); };
+    $('heading').textContent = `LiveKit spike: ${role}`;
+    $(role === 'viewer' ? 'viewer' : 'publisher').hidden = false;
+
+    async function connect(r) {
+      const { url, token, identity } = await (await fetch(`/token?role=${r}`)).json();
+      const room = new Room({ adaptiveStream: true, dynacast: true });
+      room.on(RoomEvent.Disconnected, () => log('disconnected'));
+      await room.connect(url, token);
+      log(`connected as ${identity} to room "${room.name}"`);
+      return room;
+    }
+
+    // ---------- Publisher ----------
+    let pubRoom;
+    $('file').onchange = () => {
+      const f = $('file').files[0];
+      if (f) $('fileVideo').src = URL.createObjectURL(f);
+    };
+    $('goLive').onclick = async () => {
+      try {
+        const video = $('fileVideo');
+        if (!video.src) return log('pick a file first');
+        await video.play(); // tracks only exist once playback starts
+        const stream = video.captureStream();
+        const [vTrack] = stream.getVideoTracks();
+        const [aTrack] = stream.getAudioTracks();
+        log(`file stream: video=${!!vTrack} audio=${!!aTrack}`);
+
+        pubRoom = await connect('publisher');
+        const lp = pubRoom.localParticipant;
+        if (vTrack) await lp.publishTrack(vTrack, { source: Track.Source.ScreenShare, name: 'match-video' });
+        if (aTrack) await lp.publishTrack(aTrack, { source: Track.Source.ScreenShareAudio, name: 'match-audio' });
+        await lp.setCameraEnabled(true);
+        await lp.setMicrophoneEnabled(true, { echoCancellation: true, noiseSuppression: true });
+
+        const cam = lp.getTrackPublication(Track.Source.Camera)?.track;
+        if (cam) { $('camPreview').replaceChildren(cam.attach()); }
+        for (const pub of lp.trackPublications.values()) log(`published ${pub.source} (${pub.kind}) ${pub.trackName}`);
+      } catch (e) { log('ERROR', e.message ?? e); }
+    };
+    $('end').onclick = async () => { await pubRoom?.disconnect(); $('fileVideo').pause(); log('ended'); };
+
+    // ---------- Viewer ----------
+    const audioEls = {}; // source -> <audio>
+    const applyVolumes = () => {
+      if (audioEls[Track.Source.ScreenShareAudio]) audioEls[Track.Source.ScreenShareAudio].volume = +$('matchVol').value;
+      if (audioEls[Track.Source.Microphone]) audioEls[Track.Source.Microphone].volume = +$('micVol').value;
+    };
+    $('matchVol').oninput = applyVolumes;
+    $('micVol').oninput = applyVolumes;
+
+    $('join').onclick = async () => {
+      try {
+        const room = await connect('viewer');
+        room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
+          log(`subscribed ${pub.source} (${track.kind}) from ${participant.identity}`);
+          const el = track.attach();
+          if (track.kind === 'video') {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.id = `tile-${pub.trackSid}`;
+            tile.innerHTML = `<b>${pub.source}</b>`;
+            tile.append(el);
+            $('remote').append(tile);
+          } else {
+            audioEls[pub.source] = el;
+            document.body.append(el);
+            applyVolumes();
+          }
+        });
+        room.on(RoomEvent.TrackUnsubscribed, (track, pub) => {
+          log(`unsubscribed ${pub.source}`);
+          track.detach().forEach((el) => el.remove());
+          $(`tile-${pub.trackSid}`)?.remove();
+        });
+        await room.startAudio();
+      } catch (e) { log('ERROR', e.message ?? e); }
+    };
+  </script>
+</body>
+</html>
