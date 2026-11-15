@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Send, Video } from 'lucide-react';
+import { Ban, Send, Trash2, Video } from 'lucide-react';
 import { flag, type ChatMessage, type MatchSummary } from '@d11/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { SubBadge } from '@/components/channel/Subscribe';
 
 // Stable per-name colour so chat reads like Twitch.
@@ -11,9 +12,36 @@ const NAME_COLOURS = ['#d11f26', '#1e7bd1', '#1e9e4a', '#8a3ffc', '#d1741f', '#c
 const nameColour = (name: string) =>
   NAME_COLOURS[[...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % NAME_COLOURS.length];
 
-function Line({ m }: { m: ChatMessage }) {
+export type Moderate = (a: { action: 'delete'; messageId: string } | { action: 'ban'; userId: string }) => void;
+
+function ModButtons({ m, onModerate }: { m: ChatMessage; onModerate: Moderate }) {
+  const btn =
+    'grid size-6 place-items-center rounded-md bg-surface text-muted-foreground shadow-sm ring-1 ring-border transition hover:text-brand active:scale-90';
   return (
-    <li className="px-3 py-1 text-sm leading-snug break-words hover:bg-muted/60" data-testid="chat-line">
+    <span className="absolute top-0.5 right-2 hidden gap-1 group-hover:flex group-focus-within:flex">
+      <button type="button" className={btn} title="Delete message" aria-label={`Delete message from ${m.user.name}`} onClick={() => onModerate({ action: 'delete', messageId: m.id })}>
+        <Trash2 className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        className={btn}
+        title={`Ban ${m.user.name}`}
+        aria-label={`Ban ${m.user.name}`}
+        onClick={() => {
+          onModerate({ action: 'ban', userId: m.user.id });
+          toast(`${m.user.name} is banned from your chat`);
+        }}
+      >
+        <Ban className="size-3.5" />
+      </button>
+    </span>
+  );
+}
+
+function Line({ m, onModerate }: { m: ChatMessage; onModerate?: Moderate }) {
+  return (
+    <li className="group relative px-3 py-1 text-sm leading-snug break-words hover:bg-muted/60" data-testid="chat-line">
+      {onModerate && !m.user.isCreator && <ModButtons m={m} onModerate={onModerate} />}
       {m.user.isCreator && (
         <span
           title="Creator"
@@ -43,7 +71,9 @@ export function ChatPanel({
   onSend,
   match,
   className,
+  onModerate,
 }: {
+  onModerate?: Moderate;
   messages: ChatMessage[];
   onSend: (body: string, teamBadge?: string) => void;
   match: MatchSummary | null;
@@ -83,7 +113,7 @@ export function ChatPanel({
           <li className="px-4 py-8 text-center text-sm text-muted-foreground">No messages yet. Say hi! 👋</li>
         )}
         {messages.map((m) => (
-          <Line key={m.id} m={m} />
+          <Line key={m.id} m={m} onModerate={onModerate} />
         ))}
       </ul>
       <form

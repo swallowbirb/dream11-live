@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io';
-import { ChatSend, EV, ReactionBatch, type ChatMessage, type Notify, type ReactionBurst, type ReactionCounts, type StreamStatus } from '@d11/shared';
+import { ChatSend, EV, ModActionBody, ReactionBatch, type ChatDeleted, type ChatMessage, type Notify, type ReactionBurst, type ReactionCounts, type StreamStatus } from '@d11/shared';
 import type { ChatMessage as ChatRow, User } from '@prisma/client';
 import { prisma } from './db';
 import { userForToken } from './auth';
@@ -69,6 +69,13 @@ export async function notifyFollowers(channelId: string, payload: Notify) {
   if (follows.length) ioRef.to(follows.map((f) => `user:${f.followerId}`)).emit(EV.notify, payload);
 }
 
+async function isBanned(streamId: string, userId: string) {
+  const ref = await streamRefs(streamId);
+  if (!ref) return false;
+  const ban = await prisma.ban.findUnique({ where: { channelId_userId: { channelId: ref.channelId, userId } } });
+  return !!ban && (!ban.expiresAt || ban.expiresAt > new Date());
+}
+
 /** Which of these users have an active subscription to the stream's channel (for the SUB badge). */
 async function subscriberIds(streamId: string, userIds: string[]) {
   const ref = await streamRefs(streamId);
@@ -133,6 +140,7 @@ export function setupRealtime(io: Server) {
       if (!parsed.success) return socket.emit(EV.chatRejected, { reason: 'Message must be 1–300 characters' });
       const { streamId, body, teamBadge } = parsed.data;
       if (!socket.rooms.has(roomOf(streamId))) return;
+      if (await isBanned(streamId, user.id)) return socket.emit(EV.chatRejected, { reason: 'You are banned from this chat' });
       const row = await prisma.chatMessage.create({
         data: { streamId, userId: user.id, body, teamBadge: teamBadge || null },
         include: { user: { select: { id: true, name: true } } },
@@ -142,6 +150,37 @@ export function setupRealtime(io: Server) {
     });
 
     pollSockets(io, socket, user.id);
+
+    // Moderation: the stream's creator deletes a message or bans its author (permanent, whole channel).
+    socket.on(EV.modAction, async (payload: unknown) => {
+      const parsed = ModActionBody.safeParse(payload);
+      if (!parsed.success) return;
+      const a = parsed.data;
+      const ref = await streamRefs(a.streamId);
+      if (!ref || ref.userId !== user.id) return;
+      let messageIds: string[];
+      if (a.action === 'delete') {
+        const res = await prisma.chatMessage.updateMany({ where: { id: a.messageId, streamId: a.streamId }, data: { deletedBy: user.id } });
+        messageIds = res.count ? [a.messageId] : [];
+      } else {
+        if (a.userId === user.id) return;
+        const key = { channelId: ref.channelId, userId: a.userId };
+        await prisma.ban.upsert({ where: { channelId_userId: key }, create: { ...key, byUserId: user.id }, update: { expiresAt: null } });
+        const rows = await prisma.chatMessage.findMany({ where: { streamId: a.streamId, userId: a.userId, deletedBy: null }, select: { id: true } });
+        messageIds = rows.map((r) => r.id);
+        await prisma.chatMessage.updateMany({ where: { id: { in: messageIds } }, data: { deletedBy: user.id } });
+      }
+      await prisma.modAction.create({
+        data: {
+          channelId: ref.channelId,
+          actorId: user.id,
+          targetUserId: a.action === 'ban' ? a.userId : null,
+          action: a.action,
+          details: a.action === 'delete' ? a.messageId : null,
+        },
+      });
+      if (messageIds.length) io.to(roomOf(a.streamId)).emit(EV.chatDeleted, { streamId: a.streamId, messageIds } satisfies ChatDeleted);
+    });
 
     socket.on(EV.reactionBatch, (payload: unknown) => {
       const parsed = ReactionBatch.safeParse(payload);

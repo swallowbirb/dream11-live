@@ -336,7 +336,7 @@ export function DashboardPage() {
             )}
           </section>
           {live && <PollControls streamId={stream.id} poll={polls.poll} onPoll={polls.setPoll} />}
-          {live && <ChatPanel messages={chat.messages} onSend={chat.send} match={stream.match} className="h-[26rem]" />}
+          {live && <ChatPanel messages={chat.messages} onSend={chat.send} onModerate={chat.moderate} match={stream.match} className="h-[26rem]" />}
         </div>
       </div>
     </div>

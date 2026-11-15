@@ -388,7 +388,7 @@ All paths are served under `/api` (the web app proxies it to the server).
 | GET | `/channels/:id/subscribers` | creator only |
 | PUT | `/channels/:id/mod-settings` | slow mode, sub/follower-only, word list |
 | POST/DELETE | `/channels/:id/moderators/:userId` | promote / demote |
-| POST/DELETE | `/channels/:id/bans/:userId` | ban or timeout / unban |
+| POST/DELETE | `/channels/:id/bans/:userId` | ban or timeout / unban (prototype: ban is the `mod:action` socket event; only DELETE exists) |
 | GET | `/notifications` | list; mark read |
 | GET | `/replay` | ReplayFeed status (prototype, no auth) |
 | POST | `/replay/start`, `/replay/stop` | start (from ball 0, `{ speed }`) or stop the replay |
@@ -403,7 +403,7 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | C→S | `chat:send` | `streamId, body, teamBadge` |
 | S→C | `chat:history` | `streamId`, last 50 messages (sent to the joiner) |
 | S→C | `chat:message` | `streamId`, message + user (`id`, `name`, `isCreator`, `isSub`) |
-| S→C | `chat:deleted` | `messageId` |
+| S→C | `chat:deleted` | `streamId`, `messageIds` (one for a delete, all of a banned user's on the stream) |
 | S→C | `chat:rejected` | `reason` (slow mode, banned, filtered…) |
 | C→S | `reaction:batch` | `streamId`, `counts` `{ emoji: count }` |
 | S→C | `reaction:burst` | `streamId`, this tick's counts per emoji, hype level 0–100 (taps in the last 5 s) |
@@ -412,7 +412,7 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | S→C | `score:update` | `matchId`, `score` (runs, wickets, overs, batters, bowler, last 6 balls) |
 | S→C | `stream:status` | `streamId`, viewer count (sockets in the room minus the streamer) |
 | S→C | `notify` | `{ type: 'live', stream }` to followers' `user:<id>` rooms when a creator goes live (every socket joins its user's room) |
-| C→S | `mod:action` | delete / timeout / ban, target |
+| C→S | `mod:action` | `streamId` + `delete` (`messageId`) or `ban` (`userId`); timeout is cut for the prototype |
 
 ---
 

@@ -48,6 +48,13 @@ export async function channelRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // Unban (creator only). No UI in the prototype: for demos and checks, e.g. `curl -X DELETE`.
+  app.delete<{ Params: { id: string; userId: string } }>('/api/channels/:id/bans/:userId', { preHandler: requireUser }, async (req, reply) => {
+    if (req.user.channelId !== req.params.id) return reply.code(403).send({ error: 'Creators only' });
+    await prisma.ban.deleteMany({ where: { channelId: req.params.id, userId: req.params.userId } });
+    return { ok: true };
+  });
+
   // Followed channels, live ones first (most viewers first), then offline by name.
   app.get('/api/me/following', { preHandler: requireUser }, async (req) => {
     const rows = await prisma.follow.findMany({ where: { followerId: req.user.id }, include: { channel: { include: rowInclude } } });

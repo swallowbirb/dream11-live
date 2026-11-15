@@ -164,3 +164,13 @@ export type SubTierInfo = { id: string; name: string; displayPrice: string; perk
 export type TiersResponse = { tiers: SubTierInfo[]; mySub: { tierId: string; since: string } | null };
 
 export const SubscribeBody = z.object({ tierId: z.string().min(1) });
+
+/** C→S `mod:action` (the stream's creator only): delete one message, or ban its author from the channel's chat. */
+export const ModActionBody = z.discriminatedUnion('action', [
+  z.object({ streamId: z.string().min(1), action: z.literal('delete'), messageId: z.string().min(1) }),
+  z.object({ streamId: z.string().min(1), action: z.literal('ban'), userId: z.string().min(1) }),
+]);
+export type ModActionBody = z.infer<typeof ModActionBody>;
+
+/** S→C `chat:deleted`: messages removed by a moderator (one id for a delete, all of the user's for a ban). */
+export type ChatDeleted = { streamId: string; messageIds: string[] };
