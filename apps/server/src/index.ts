@@ -5,6 +5,7 @@ import { authRoutes } from './auth';
 import { streamRoutes } from './streams';
 import { setupRealtime } from './realtime';
 import { replayRoutes } from './feed/routes';
+import { pollRoutes } from './polls';
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -22,5 +23,6 @@ await app.register(streamRoutes);
 const io = new Server(app.server, { path: '/socket.io' });
 setupRealtime(io);
 await app.register(replayRoutes(io));
+await app.register(pollRoutes(io));
 
 await app.listen({ port: PORT, host: '0.0.0.0' });

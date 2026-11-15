@@ -46,6 +46,33 @@ export type ReactionBatch = z.infer<typeof ReactionBatch>;
 /** S→C `reaction:burst`, every 250 ms while a room has taps or hype: this tick's counts + hype 0–100. */
 export type ReactionBurst = { streamId: string; counts: ReactionCounts; hype: number };
 
+/** POST /api/streams/:id/polls (creator). */
+export const PollCreate = z.object({
+  question: z.string().trim().min(1).max(120),
+  options: z.array(z.string().trim().min(1).max(40)).min(2).max(4),
+});
+export type PollCreate = z.infer<typeof PollCreate>;
+
+/** C→S `poll:vote`: one vote per user per poll. */
+export const PollVoteBody = z.object({ pollId: z.string().min(1), optionIndex: z.number().int().min(0).max(3) });
+export type PollVoteBody = z.infer<typeof PollVoteBody>;
+
+export type PollState = {
+  id: string;
+  streamId: string;
+  question: string;
+  options: string[];
+  counts: number[];
+  total: number;
+  status: 'open' | 'closed';
+};
+
+/**
+ * S→C `poll:update`: on start, every vote and close (to the room), and on room:join (to the joiner).
+ * `myVote` is only set on messages sent to one user (their join, their own vote); keep the last known value.
+ */
+export type PollUpdate = { streamId: string; poll: PollState; myVote?: number | null };
+
 export type PublicUser = { id: string; name: string; role: Role };
 
 export type ChatMessage = {

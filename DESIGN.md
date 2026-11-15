@@ -407,8 +407,8 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | S→C | `chat:rejected` | `reason` (slow mode, banned, filtered…) |
 | C→S | `reaction:batch` | `streamId`, `counts` `{ emoji: count }` |
 | S→C | `reaction:burst` | `streamId`, this tick's counts per emoji, hype level 0–100 (taps in the last 5 s) |
-| S→C | `poll:update` | poll state + counts |
-| C→S | `poll:vote` | `pollId, optionIndex` |
+| S→C | `poll:update` | `streamId`, poll (question, options, counts, total, status), `myVote` on messages to one user |
+| C→S | `poll:vote` | `pollId, optionIndex` (first vote counts) |
 | S→C | `score:update` | `matchId`, `score` (runs, wickets, overs, batters, bowler, last 6 balls) |
 | S→C | `stream:status` | `streamId`, viewer count (sockets in the room minus the streamer) |
 | S→C | `notify` | go-live and other notifications |

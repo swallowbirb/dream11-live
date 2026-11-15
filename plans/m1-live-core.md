@@ -9,7 +9,7 @@ Anything new goes to `plan.md` §8.
 
 ## Status (update at the end of every phase)
 
-**Module 1 is done (2026-11-15). Next up: Module 2 (Cricket + hype)** in [`plans/m2-cricket-hype.md`](m2-cricket-hype.md).
+**Module 1 is done (2026-11-15).** Module 2 is done too; see [`plans/m2-cricket-hype.md`](m2-cricket-hype.md) for what's next.
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |

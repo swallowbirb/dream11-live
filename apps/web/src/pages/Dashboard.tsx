@@ -18,6 +18,8 @@ import { ChatPanel } from '@/components/chat/ChatPanel';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
 import { useReactions } from '@/hooks/useReactions';
 import { HypeMeter } from '@/components/player/Reactions';
+import { usePoll } from '@/hooks/usePoll';
+import { PollControls } from '@/components/poll/PollControls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,6 +54,7 @@ export function DashboardPage() {
   const live = stream?.status === 'live';
   const chat = useStreamRoom(live ? stream.id : undefined);
   const reactions = useReactions(live ? stream.id : undefined);
+  const polls = usePoll(live ? stream.id : undefined);
 
   // Default to the first live match.
   useEffect(() => {
@@ -332,6 +335,7 @@ export function DashboardPage() {
               <p className="text-center text-xs text-muted-foreground">Last stream ended. Go live again any time.</p>
             )}
           </section>
+          {live && <PollControls streamId={stream.id} poll={polls.poll} onPoll={polls.setPoll} />}
           {live && <ChatPanel messages={chat.messages} onSend={chat.send} match={stream.match} className="h-[26rem]" />}
         </div>
       </div>

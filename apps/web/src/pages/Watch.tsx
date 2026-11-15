@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MonitorOff } from 'lucide-react';
@@ -10,6 +11,8 @@ import { ViewerCount } from '@/components/ViewerCount';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
 import { useReactions } from '@/hooks/useReactions';
+import { usePoll } from '@/hooks/usePoll';
+import { PollCard } from '@/components/poll/PollCard';
 import { EmojiTray, HypeMeter, ReactionOverlay } from '@/components/player/Reactions';
 import { api } from '@/lib/api';
 
@@ -24,6 +27,11 @@ export function WatchPage() {
   const live = stream?.status === 'live';
   const room = useStreamRoom(stream?.id);
   const reactions = useReactions(live ? stream?.id : undefined);
+  const polls = usePoll(live ? stream?.id : undefined);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const poll = polls.poll && polls.poll.id !== dismissed ? polls.poll : null;
+  const pollCard = (cls: string) =>
+    poll && <PollCard poll={poll} myVote={polls.myVote} onVote={polls.vote} onDismiss={() => setDismissed(poll.id)} className={cls} />;
   const { data: tok } = useQuery({
     queryKey: ['stream-token', streamId],
     queryFn: () => api<StreamToken>(`/streams/${streamId}/token`),
@@ -44,7 +52,12 @@ export function WatchPage() {
             url={tok.url}
             token={tok.token}
             onPublisherLeft={() => qc.invalidateQueries({ queryKey: ['stream', streamId] })}
-            overlay={<ReactionOverlay floaters={reactions.floaters} done={reactions.done} />}
+            overlay={
+              <>
+                <ReactionOverlay floaters={reactions.floaters} done={reactions.done} />
+                {pollCard('pointer-events-auto absolute top-3 left-3 hidden w-72 sm:block')}
+              </>
+            }
           />
         ) : live ? (
           <div className="aspect-video animate-pulse rounded-2xl bg-ink/80" />
@@ -64,6 +77,8 @@ export function WatchPage() {
             <HypeMeter value={reactions.hype} />
           </div>
         )}
+
+        {live && pollCard('sm:hidden')}
 
         {live && score && <Scorecard score={score} />}
 

@@ -5,7 +5,9 @@ import { prisma } from './db';
 import { userForToken } from './auth';
 
 type SocketUser = NonNullable<Awaited<ReturnType<typeof userForToken>>>;
-export const roomOf = (streamId: string) => `stream:${streamId}`;
+import { roomOf } from './rooms';
+import { pollJoin, pollSockets } from './polls';
+export { roomOf };
 
 // streamId → the streamer's user id (for the creator badge and the viewer count). Streams never change owner.
 const ownerCache = new Map<string, string | null>();
@@ -93,6 +95,7 @@ export function setupRealtime(io: Server) {
         streamOwner(streamId),
       ]);
       socket.emit(EV.chatHistory, { streamId, messages: rows.reverse().map((m) => toMessage(m, owner)) });
+      await pollJoin(socket, streamId, user.id);
       await broadcastCount(streamId);
     });
 
@@ -112,6 +115,8 @@ export function setupRealtime(io: Server) {
       });
       io.to(roomOf(streamId)).emit(EV.chatMessage, { streamId, message: toMessage(row, await streamOwner(streamId)) });
     });
+
+    pollSockets(io, socket, user.id);
 
     socket.on(EV.reactionBatch, (payload: unknown) => {
       const parsed = ReactionBatch.safeParse(payload);
