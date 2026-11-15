@@ -1,0 +1,143 @@
+# M1 Live core: phase plan
+
+Module 1 from [`plan.md`](../plan.md) §4, broken into phases. One phase per chat. Budget ~2h total.
+
+**Module done when:** two browsers (creator + viewer) do go-live → watch → chat locally.
+
+Rules for every phase: happy path only, typecheck is the check, no tests, commit at the end of each phase.
+Anything new goes to `plan.md` §8.
+
+---
+
+## Before P1 (user, ~5 min)
+
+- [ ] Create a free LiveKit Cloud project. Have `LIVEKIT_URL` (`wss://…livekit.cloud`), `LIVEKIT_API_KEY`,
+      `LIVEKIT_API_SECRET` ready. They go in `apps/server/.env` (gitignored), and in `spike/.env` for P1.
+- [ ] A short test video file on disk (an `.mp4` with audio, any match clip) and a working webcam.
+- `pnpm` isn't installed: P1 runs `corepack enable` (Node 22 ships it). No GitHub remote yet: commits stay
+  local until one is added.
+
+---
+
+## P1. LiveKit spike (S0, 20 min) — the risk check
+
+Throwaway, under `spike/`, not part of the app.
+
+- `spike/token.mjs`: uses `livekit-server-sdk` to print two tokens for room `spike` (one publisher, one
+  subscriber).
+- `spike/index.html`: one page, `livekit-client` from a CDN, token pasted in or read from `?token=`.
+  - **Publish mode:** file picker → hidden `<video>` → `captureStream()` → publish its video track as
+    `ScreenShare` and audio as `ScreenShareAudio`. Then camera + mic as `Camera` + `Microphone`.
+  - **Watch mode:** subscribe, show the screen-share video and camera video side by side, log each track's
+    `source`, and play both audio tracks.
+- Serve with `npx serve spike` (getUserMedia needs localhost).
+
+**Pass:** second tab sees both videos, hears the file audio, and the sources come through correctly.
+**Fail after 20 min:** publish one combined track (file video only + mic), write that in `plan.md` §6, and P4/P5
+drop the layout toggle and the second volume slider.
+
+Keep the working publish/subscribe snippets: P4 and P5 copy them.
+
+---
+
+## P2. Scaffold (S1, 25 min)
+
+- pnpm workspace: `apps/web`, `apps/server`, `packages/shared`. Root scripts: `dev` (both apps in parallel),
+  `typecheck` (all packages).
+- `apps/web`: Vite + React + TS, Tailwind, shadcn/ui init (button, input, card, dialog, slider, sonner),
+  React Router, TanStack Query, Zustand, socket.io-client, `livekit-client` + `@livekit/components-react`,
+  Lucide. Dream11 tokens from DESIGN §4.1 as CSS variables + Tailwind colours, Inter + Barlow from Google Fonts.
+  Vite proxy `/api` and `/socket.io` → server, so there's no CORS.
+- `apps/server`: Fastify + Socket.IO on one port, `dotenv`, `GET /api/health`.
+- Prisma on SQLite with the **whole** DESIGN §6 schema in one migration (tags/JSON fields as `String`).
+- `packages/shared`: socket event name constants and the Zod schemas M1 needs (signup/login, go-live body,
+  chat message). More added as later steps need them.
+- Fill in the Commands section of `CLAUDE.md`.
+
+**Done when:** `pnpm dev` serves a red-header page that shows the result of `/api/health`, and
+`pnpm typecheck` is clean.
+
+---
+
+## P3. Auth + shell (S2, 20 min)
+
+- Server: `POST /api/auth/signup` (creates user, and a channel if role is creator), `POST /api/auth/login`,
+  `GET /api/me`. bcrypt, random session token in `sessions`. A small `requireUser` preHandler reading
+  `Authorization: Bearer <token>`.
+- Web: login / signup pages (name, password, two role cards). Session in a Zustand store persisted to
+  `localStorage`; a fetch helper adds the header. Redirect to `/login` when logged out.
+- App shell: red header (logo, avatar menu with log out, "Dashboard" link for creators), mobile bottom tabs
+  (Home · Matches · Following · Profile). Routes as empty pages: `/`, `/matches/:id`, `/c/:channelId`,
+  `/watch/:streamId`, `/dashboard`, `/following`.
+- `prisma/seed.ts`: 3 creators, 3 viewers (password `pass` for all), 2 matches (IND vs AUS live, ENG vs NZ
+  upcoming). Seed users are listed in `CLAUDE.md` Commands.
+
+**Done when:** signup, logout, login as a seeded user all work, and the shell looks right on desktop and phone width.
+
+---
+
+## P4. Go live: server + creator dashboard (S3 part 1, 20 min)
+
+- Server: `VideoProvider` interface (`getPublishToken`, `getViewerToken`) with a LiveKit implementation.
+  Room name = stream id.
+  - `POST /api/streams` (creator): creates the stream with status `live` straight away (no `starting` step:
+    happy path), returns `{ stream, token, url }`.
+  - `POST /api/streams/:id/end`: status `ended`, `ended_at`.
+  - `GET /api/streams/:id`: stream + channel + match. `GET /api/streams/:id/token`: viewer token.
+  - `GET /api/matches`: for the go-live form's match dropdown.
+- Dashboard (`/dashboard`): form (title, match, supporting team from that match's two teams, language),
+  file picker and camera toggle, local preview of both, **Go live** / **End stream**, play/pause for the file.
+  Publish code copied from the P1 spike.
+
+**Done when:** creator goes live and the stream shows as published in the LiveKit Cloud dashboard; End stops it.
+
+---
+
+## P5. Player page (S3 part 2, 20 min)
+
+- `/watch/:streamId`: fetch stream + viewer token, connect, pick tracks by source.
+- Layout: match video full size, facecam as a draggable PiP (Framer Motion `drag` constrained to the player).
+  Toggle: **PiP / Side by side**.
+- Two volume sliders: **Match** (screen-share audio) and **Creator** (mic), each setting its audio element's
+  volume.
+- Header bar under the player: title, creator name, match name. An "offline" card when the stream is `ended`.
+- Temporary: the dashboard shows a "Viewer link" to `/watch/:id` (home lists live streams in M2).
+
+**Done when:** a second browser logged in as a viewer sees and hears both parts, drags the PiP, switches
+layout and mixes audio.
+
+---
+
+## P6. Chat + viewer count (S4, 15 min)
+
+- Socket.IO auth: session token in `handshake.auth`, user loaded on connect.
+- `room:join` / `room:leave` (`streamId`). On join, the server sends the last 50 messages.
+- `chat:send` `{ body, teamBadge }` → Zod check → save `chat_messages` → `chat:message` to the room with
+  `{ id, user: { name, isCreator }, body, teamBadge, createdAt }`.
+- `stream:status` `{ viewerCount }` to the room on every join/leave (room size, no DB).
+- Chat panel component used on the player (right on desktop, under the player on mobile) and the dashboard:
+  messages, input, team badge picker (the match's two teams, flag emoji), creator badge on the streamer's
+  messages. Viewer count on both pages.
+
+**Done when:** creator and viewer chat in real time with badges, and the viewer count moves as tabs open and close.
+
+---
+
+## Module close (5 min)
+
+- Click-through of the module's "done when" in two browsers.
+- `plan.md` §9: mark M1 steps done. Note any cuts in §6/§7. Commit.
+
+## Phase timing
+
+| Phase | Step | Time |
+| --- | --- | --- |
+| P1 | S0 spike | 20 |
+| P2 | S1 scaffold | 25 |
+| P3 | S2 auth + shell | 20 |
+| P4 | S3 go live (server + dashboard) | 20 |
+| P5 | S3 player | 20 |
+| P6 | S4 chat | 15 |
+| | **Total** | **~2h** |
+
+If behind at P5: drop the layout toggle (PiP only), per `plan.md` §7.
