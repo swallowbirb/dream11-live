@@ -127,8 +127,17 @@ export function DashboardPage() {
         const ms = (v as HTMLVideoElement & { captureStream(): MediaStream }).captureStream();
         const [vt] = ms.getVideoTracks();
         const [at] = ms.getAudioTracks();
-        if (vt) await lp.publishTrack(vt, { source: Track.Source.ScreenShare, name: 'match-video', simulcast: true });
-        if (at) await lp.publishTrack(at, { source: Track.Source.ScreenShareAudio, name: 'match-audio' });
+        if (vt)
+          await lp.publishTrack(vt, {
+            source: Track.Source.ScreenShare,
+            name: 'match-video',
+            simulcast: true,
+          });
+        if (at)
+          await lp.publishTrack(at, {
+            source: Track.Source.ScreenShareAudio,
+            name: 'match-audio',
+          });
       }
       if (cam) {
         await lp.publishTrack(cam.video, { source: Track.Source.Camera });
@@ -237,106 +246,139 @@ export function DashboardPage() {
             )}
             {fileName && <span className="truncate text-xs text-muted-foreground">{fileName}</span>}
           </div>
+          {live && <PollControls streamId={stream.id} poll={polls.poll} onPoll={polls.setPoll} />}
         </section>
 
-        {/* Go-live form, then chat while live */}
+        {/* Go-live form; while live: a summary with End, then chat */}
         <div className="space-y-5">
-          <section className="space-y-4 rounded-2xl bg-surface p-5 shadow-sm">
-            <div className="space-y-2">
-              <Label htmlFor="title">Stream title</Label>
-              <Input
-                id="title"
-                placeholder="IND vs AUS live reactions 🔥"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={live}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="match">Match</Label>
-              <select
-                id="match"
-                className={selectCls}
-                value={matchId}
-                disabled={live}
-                onChange={(e) => {
-                  setMatchId(e.target.value);
-                  setTeam('');
-                }}
-              >
-                {matches.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.teamA} vs {m.teamB} · {m.status === 'live' ? 'LIVE' : m.status}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {match && (
-              <div className="space-y-2">
-                <Label>Supporting</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[match.teamA, match.teamB, ''].map((t) => (
-                    <button
-                      key={t || 'neutral'}
-                      type="button"
-                      disabled={live}
-                      onClick={() => setTeam(t)}
-                      className={cn(
-                        'rounded-lg border-2 px-2 py-1.5 text-sm font-semibold transition active:scale-95',
-                        team === t ? 'border-brand bg-accent text-accent-foreground' : 'border-border',
-                      )}
-                    >
-                      {t ? `${flag(t)} ${t}` : 'Neutral'}
-                    </button>
-                  ))}
-                </div>
+          {live ? (
+            <section className="space-y-3 rounded-2xl bg-surface p-5 shadow-sm" data-testid="live-summary">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <LivePill />
+                <span className="tabular">
+                  since{' '}
+                  {new Date(stream.startedAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <select
-                id="language"
-                className={selectCls}
-                value={language}
-                disabled={live}
-                onChange={(e) => setLanguage(e.target.value)}
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l}>{l}</option>
-                ))}
-              </select>
-            </div>
-
-            {live ? (
-              <div className="space-y-2">
-                <Button variant="outline" asChild className="w-full">
+              <h2 className="font-display text-2xl leading-tight font-bold">{stream.title}</h2>
+              <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+                {stream.match && (
+                  <span>
+                    {flag(stream.match.teamA)} {stream.match.teamA} vs {stream.match.teamB} {flag(stream.match.teamB)}
+                  </span>
+                )}
+                <span>· {stream.language}</span>
+                {stream.supportingTeam && (
+                  <span>
+                    · Supporting {flag(stream.supportingTeam)} {stream.supportingTeam}
+                  </span>
+                )}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" asChild className="flex-1">
                   <Link to={`/watch/${stream.id}`} target="_blank">
-                    <ExternalLink /> Viewer link
+                    <ExternalLink /> Viewer page
                   </Link>
                 </Button>
                 <Button
-                  size="lg"
-                  className="w-full bg-ink font-semibold hover:bg-ink/90"
+                  className="flex-1 bg-ink font-semibold hover:bg-ink/90"
                   onClick={() => end.mutate()}
                   disabled={end.isPending}
                 >
                   <Square /> End stream
                 </Button>
               </div>
-            ) : (
+            </section>
+          ) : (
+            <section className="space-y-4 rounded-2xl bg-surface p-5 shadow-sm">
+              <div className="space-y-2">
+                <Label htmlFor="title">Stream title</Label>
+                <Input
+                  id="title"
+                  placeholder="IND vs AUS live reactions 🔥"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={live}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="match">Match</Label>
+                <select
+                  id="match"
+                  className={selectCls}
+                  value={matchId}
+                  disabled={live}
+                  onChange={(e) => {
+                    setMatchId(e.target.value);
+                    setTeam('');
+                  }}
+                >
+                  {matches.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.teamA} vs {m.teamB} · {m.status === 'live' ? 'LIVE' : m.status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {match && (
+                <div className="space-y-2">
+                  <Label>Supporting</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[match.teamA, match.teamB, ''].map((t) => (
+                      <button
+                        key={t || 'neutral'}
+                        type="button"
+                        disabled={live}
+                        onClick={() => setTeam(t)}
+                        className={cn(
+                          'rounded-lg border-2 px-2 py-1.5 text-sm font-semibold transition active:scale-95',
+                          team === t ? 'border-brand bg-accent text-accent-foreground' : 'border-border',
+                        )}
+                      >
+                        {t ? `${flag(t)} ${t}` : 'Neutral'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <select
+                  id="language"
+                  className={selectCls}
+                  value={language}
+                  disabled={live}
+                  onChange={(e) => setLanguage(e.target.value)}
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+
               <Button size="lg" className="w-full font-semibold" disabled={!canGoLive} onClick={() => goLive.mutate()}>
                 <Radio /> {goLive.isPending ? 'Connecting…' : 'Go live'}
               </Button>
-            )}
-            {!live && !(fileUrl || cam) && (
-              <p className="text-center text-xs text-muted-foreground">Add a match video, your camera, or both.</p>
-            )}
-            {stream?.status === 'ended' && (
-              <p className="text-center text-xs text-muted-foreground">Last stream ended. Go live again any time.</p>
-            )}
-          </section>
-          {live && <PollControls streamId={stream.id} poll={polls.poll} onPoll={polls.setPoll} />}
-          {live && <ChatPanel messages={chat.messages} onSend={chat.send} onModerate={chat.moderate} match={stream.match} className="h-[26rem]" />}
+              {!live && !(fileUrl || cam) && (
+                <p className="text-center text-xs text-muted-foreground">Add a match video, your camera, or both.</p>
+              )}
+              {stream?.status === 'ended' && (
+                <p className="text-center text-xs text-muted-foreground">Last stream ended. Go live again any time.</p>
+              )}
+            </section>
+          )}
+          {live && (
+            <ChatPanel
+              messages={chat.messages}
+              onSend={chat.send}
+              onModerate={chat.moderate}
+              match={stream.match}
+              className="h-[30rem] lg:h-[calc(100dvh-18rem)] lg:min-h-[26rem]"
+            />
+          )}
         </div>
       </div>
     </div>

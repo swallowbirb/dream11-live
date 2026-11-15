@@ -150,7 +150,12 @@ filters, emote picker, dark mode. Plus everything in DESIGN.md §3.2 to §3.4.
 
 New ideas that come up during the build go here, unbuilt.
 
--
+- **Streams left live when a creator closes the browser.** Leaving the dashboard ends the stream, but closing the
+  tab or a crash doesn't, so the stream stays on home and the match page. Fix with LiveKit webhooks
+  (`participant_left` / `room_finished`) or a sweep of live streams whose LiveKit room is empty.
+- **Unban UI** (a banned list on the dashboard). Today: `DELETE /api/channels/:id/bans/:userId` only.
+- **Slider accessible names:** the `aria-label` on the volume sliders sits on the Radix root, not the thumb
+  (`role=slider`), so screen readers announce an unnamed slider.
 
 ## 9. Progress
 
@@ -166,5 +171,5 @@ New ideas that come up during the build go here, unbuilt.
 | M2 | S3 Reactions + polls | done: emoji bursts + hype meter, polls with live results |
 | M3 | S1 Follow + notify | done: follow/unfollow, channel page, Following page, go-live toast |
 | M3 | S2 Subs + mod (thin) | done: tiers, checkout modal, SUB badge; creator deletes messages and bans |
-| M3 | S3 Polish pass | not started |
-| M3 | S4 Deploy (stretch) | not started |
+| M3 | S3 Polish pass | done: LIVE pulse, press feedback, skeletons, empty states, profile, live dashboard layout, side-by-side fix; demo script passes headless |
+| M3 | S4 Deploy (stretch) | not started: optional and outward-facing (Railway, Vercel, accounts, secrets); waits for the user's go-ahead |

@@ -45,8 +45,17 @@ export function WatchPage() {
   const channel = useChannel(stream?.channel.id).data?.channel;
   const score = room.score ?? stream?.match?.score ?? null;
 
-  if (isPending) return <div className="aspect-video animate-pulse rounded-2xl bg-muted" />;
-  if (!stream) return <p className="text-muted-foreground">Stream not found.</p>;
+  if (isPending) return <WatchSkeleton />;
+  if (!stream)
+    return (
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed bg-surface p-10 text-center">
+        <MonitorOff className="size-8 text-brand" />
+        <p className="font-semibold">This stream doesn't exist</p>
+        <Link to="/" className="text-sm font-semibold text-brand hover:underline">
+          Find someone live
+        </Link>
+      </div>
+    );
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -125,8 +134,29 @@ export function WatchPage() {
         messages={room.messages}
         onSend={room.send}
         match={stream.match}
+        closed={!live}
         className="h-[28rem] lg:sticky lg:top-20 lg:h-[calc(100dvh-6.5rem)]"
       />
+    </div>
+  );
+}
+
+function WatchSkeleton() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="space-y-4">
+        <div className="aspect-video animate-pulse rounded-2xl bg-ink/80" />
+        <div className="h-14 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-16 animate-pulse rounded-2xl bg-muted" />
+        <div className="flex items-center gap-3 rounded-2xl bg-surface p-4 shadow-sm">
+          <div className="size-11 animate-pulse rounded-full bg-muted" />
+          <div className="flex-1 space-y-2">
+            <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+      </div>
+      <div className="h-[28rem] animate-pulse rounded-2xl bg-muted lg:h-[calc(100dvh-6.5rem)]" />
     </div>
   );
 }

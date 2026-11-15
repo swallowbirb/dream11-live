@@ -90,3 +90,17 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* LIVE pill: a ring that grows and fades, every 2 s. */
+@keyframes live-glow {
+  0% { box-shadow: 0 0 0 0 rgb(209 31 38 / 0.55); }
+  70% { box-shadow: 0 0 0 7px rgb(209 31 38 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(209 31 38 / 0); }
+}
+@utility live-glow {
+  animation: live-glow 2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-glow, .animate-ping { animation: none; }
+}

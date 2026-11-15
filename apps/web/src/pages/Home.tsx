@@ -38,6 +38,26 @@ export function EmptyState({ title, note, action }: { title: string; note: strin
   );
 }
 
+export function MatchGridSkeleton({ n = 3 }: { n?: number }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: n }, (_, i) => (
+        <div key={i} className="space-y-3 rounded-2xl bg-surface p-4 shadow-sm">
+          <div className="flex justify-between">
+            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-12 animate-pulse rounded-full bg-muted" />
+          </div>
+          <div className="flex items-center justify-around py-1">
+            <div className="size-12 animate-pulse rounded-full bg-muted" />
+            <div className="size-12 animate-pulse rounded-full bg-muted" />
+          </div>
+          <div className="h-4 animate-pulse rounded bg-muted" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const MatchGrid = ({ matches }: { matches: MatchListItem[] }) => (
   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {matches.map((m) => (
@@ -61,7 +81,7 @@ export function HomePage() {
     <div className="space-y-8">
       <Section title="Live matches" testId="live-matches">
         {matches.isPending ? (
-          <div className="h-44 animate-pulse rounded-2xl bg-muted" />
+          <MatchGridSkeleton n={1} />
         ) : live.length ? (
           <MatchGrid matches={live} />
         ) : (
@@ -103,8 +123,14 @@ export function HomePage() {
 /** /matches: every match, grouped by status (tabs and filters are cut for the prototype). */
 export function MatchesPage() {
   const { data, isPending } = useMatches();
-  if (isPending) return <div className="h-44 animate-pulse rounded-2xl bg-muted" />;
+  if (isPending)
+    return (
+      <Section title="Matches">
+        <MatchGridSkeleton />
+      </Section>
+    );
   const all = data?.matches ?? [];
+  if (!all.length) return <EmptyState title="No matches yet" note="Fixtures show up here as soon as they're scheduled." />;
   const groups = [
     ['Live', all.filter((m) => m.status === 'live')],
     ['Upcoming', all.filter((m) => m.status === 'upcoming')],

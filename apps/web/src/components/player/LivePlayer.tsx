@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
-import {
-  Room,
-  RoomEvent,
-  Track,
-  type RemoteAudioTrack,
-  type RemoteTrack,
-  type RemoteVideoTrack,
-} from 'livekit-client';
+import { Room, RoomEvent, Track, type RemoteAudioTrack, type RemoteTrack, type RemoteVideoTrack } from 'livekit-client';
 import { Columns2, Mic, PictureInPicture2, Tv, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -72,8 +65,7 @@ export function LivePlayer({
   useEffect(() => {
     const room = new Room({ adaptiveStream: true, dynacast: true });
     roomRef.current = room;
-    const put = (source: Track.Source, track: RemoteTrack | undefined) =>
-      setTracks((t) => ({ ...t, [source]: track }));
+    const put = (source: Track.Source, track: RemoteTrack | undefined) => setTracks((t) => ({ ...t, [source]: track }));
     // Listeners before connect(), or tracks already in the room are missed (P1 spike).
     room
       .on(RoomEvent.TrackSubscribed, (track, pub) => put(pub.source, track))
@@ -98,7 +90,11 @@ export function LivePlayer({
 
   return (
     <div className="space-y-2">
-      <div ref={frame} className="relative aspect-video overflow-hidden rounded-2xl bg-ink shadow-lg" data-testid="player">
+      <div
+        ref={frame}
+        className="relative aspect-video overflow-hidden rounded-2xl bg-ink shadow-lg"
+        data-testid="player"
+      >
         {!main && (
           <div className="grid size-full place-items-center text-sm text-white/60">
             <div className="flex flex-col items-center gap-2">
@@ -108,7 +104,18 @@ export function LivePlayer({
           </div>
         )}
 
-        {main && (!both || layout === 'pip') && <VideoEl track={main} className="size-full object-contain" />}
+        {/* The main video element stays mounted across layout switches: re-attaching it can leave an
+            adaptive-stream track paused (match video went black after an early switch). */}
+        <div
+          className={
+            both && layout === 'side' ? 'grid size-full grid-cols-[2fr_1fr] items-center gap-1 bg-ink' : 'contents'
+          }
+        >
+          {main && <VideoEl track={main} className="size-full object-contain" />}
+          {both && layout === 'side' && (
+            <VideoEl track={camVideo!} className="aspect-video w-full rounded-md object-cover" />
+          )}
+        </div>
 
         {both && layout === 'pip' && (
           <motion.div
@@ -121,13 +128,6 @@ export function LivePlayer({
           >
             <VideoEl track={camVideo!} className="pointer-events-none size-full object-cover" />
           </motion.div>
-        )}
-
-        {both && layout === 'side' && (
-          <div className="grid size-full grid-cols-[2fr_1fr] items-center gap-1 bg-ink">
-            <VideoEl track={matchVideo!} className="size-full object-contain" />
-            <VideoEl track={camVideo!} className="aspect-video w-full rounded-md object-cover" />
-          </div>
         )}
 
         {overlay && <div className="pointer-events-none absolute inset-0 z-[15] overflow-hidden">{overlay}</div>}

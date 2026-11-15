@@ -38,18 +38,23 @@ export function UserAvatar({ name, className }: { name: string; className?: stri
   );
 }
 
-export function Header() {
-  const { user, clear } = useSession();
+export function useLogout() {
+  const clear = useSession((s) => s.clear);
   const navigate = useNavigate();
   const qc = useQueryClient();
-
-  const logout = async () => {
+  return async () => {
     await post('/auth/logout').catch(() => {});
     disconnectSocket();
     clear();
     qc.clear();
     navigate('/login');
   };
+}
+
+export function Header() {
+  const user = useSession((s) => s.user);
+  const navigate = useNavigate();
+  const logout = useLogout();
 
   return (
     <header className="sticky top-0 z-40 bg-brand text-white shadow-md">

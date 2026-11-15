@@ -44,7 +44,7 @@ export function ChannelPage() {
       <header className="overflow-hidden rounded-2xl bg-surface shadow-sm">
         <div className="h-28 bg-gradient-to-r from-brand via-brand-dark to-ink sm:h-36" />
         <div className="px-5 pb-5">
-          <div className="flex items-end gap-4">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
             <UserAvatar name={c.displayName} className="-mt-10 size-20 shrink-0 text-2xl ring-4 ring-surface" />
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -56,9 +56,8 @@ export function ChannelPage() {
                 {c.followerCount === 1 ? 'follower' : 'followers'}
               </p>
             </div>
-            <div className="hidden sm:block">{action}</div>
+            <div className="col-span-2 mt-4 sm:col-span-1 sm:mt-0">{action}</div>
           </div>
-          <div className="mt-4 sm:hidden">{action}</div>
         </div>
         {(c.bio || c.tags.length > 0 || c.favouriteTeam) && (
           <div className="space-y-2 border-t px-5 py-4">

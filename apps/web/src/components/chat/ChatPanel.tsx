@@ -19,7 +19,13 @@ function ModButtons({ m, onModerate }: { m: ChatMessage; onModerate: Moderate })
     'grid size-6 place-items-center rounded-md bg-surface text-muted-foreground shadow-sm ring-1 ring-border transition hover:text-brand active:scale-90';
   return (
     <span className="absolute top-0.5 right-2 hidden gap-1 group-hover:flex group-focus-within:flex">
-      <button type="button" className={btn} title="Delete message" aria-label={`Delete message from ${m.user.name}`} onClick={() => onModerate({ action: 'delete', messageId: m.id })}>
+      <button
+        type="button"
+        className={btn}
+        title="Delete message"
+        aria-label={`Delete message from ${m.user.name}`}
+        onClick={() => onModerate({ action: 'delete', messageId: m.id })}
+      >
         <Trash2 className="size-3.5" />
       </button>
       <button
@@ -56,7 +62,11 @@ function Line({ m, onModerate }: { m: ChatMessage; onModerate?: Moderate }) {
           <SubBadge />
         </span>
       )}
-      {m.teamBadge && <span className="mr-1" title={m.teamBadge}>{flag(m.teamBadge)}</span>}
+      {m.teamBadge && (
+        <span className="mr-1" title={m.teamBadge}>
+          {flag(m.teamBadge)}
+        </span>
+      )}
       <span className="font-semibold" style={{ color: nameColour(m.user.name) }}>
         {m.user.name}
       </span>
@@ -72,8 +82,11 @@ export function ChatPanel({
   match,
   className,
   onModerate,
+  closed,
 }: {
   onModerate?: Moderate;
+  /** Stream has ended: history stays readable, sending is off. */
+  closed?: boolean;
   messages: ChatMessage[];
   onSend: (body: string, teamBadge?: string) => void;
   match: MatchSummary | null;
@@ -100,7 +113,9 @@ export function ChatPanel({
 
   return (
     <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-2xl bg-surface shadow-sm', className)}>
-      <header className="border-b px-4 py-2.5 font-display text-sm font-bold tracking-wide uppercase">Stream chat</header>
+      <header className="border-b px-4 py-2.5 font-display text-sm font-bold tracking-wide uppercase">
+        Stream chat
+      </header>
       <ul
         ref={list}
         onScroll={(e) => {
@@ -123,37 +138,47 @@ export function ChatPanel({
           submit();
         }}
       >
-        {match && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="mr-1 text-muted-foreground">Badge</span>
-            {[match.teamA, match.teamB, ''].map((t) => (
-              <button
-                key={t || 'none'}
-                type="button"
-                onClick={() => setBadge(t)}
-                aria-pressed={badge === t}
-                className={cn(
-                  'rounded-full border px-2 py-0.5 font-semibold transition active:scale-95',
-                  badge === t ? 'border-brand bg-accent text-accent-foreground' : 'border-border text-muted-foreground',
-                )}
-              >
-                {t ? `${flag(t)} ${t}` : 'None'}
-              </button>
-            ))}
-          </div>
+        {closed ? (
+          <p className="rounded-md bg-muted px-3 py-2 text-center text-sm text-muted-foreground">
+            Chat is closed: this stream has ended.
+          </p>
+        ) : (
+          <>
+            {match && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="mr-1 text-muted-foreground">Badge</span>
+                {[match.teamA, match.teamB, ''].map((t) => (
+                  <button
+                    key={t || 'none'}
+                    type="button"
+                    onClick={() => setBadge(t)}
+                    aria-pressed={badge === t}
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 font-semibold transition active:scale-95',
+                      badge === t
+                        ? 'border-brand bg-accent text-accent-foreground'
+                        : 'border-border text-muted-foreground',
+                    )}
+                  >
+                    {t ? `${flag(t)} ${t}` : 'None'}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Send a message"
+                value={text}
+                maxLength={300}
+                onChange={(e) => setText(e.target.value)}
+                aria-label="Chat message"
+              />
+              <Button type="submit" size="icon" aria-label="Send" disabled={!text.trim()}>
+                <Send />
+              </Button>
+            </div>
+          </>
         )}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Send a message"
-            value={text}
-            maxLength={300}
-            onChange={(e) => setText(e.target.value)}
-            aria-label="Chat message"
-          />
-          <Button type="submit" size="icon" aria-label="Send" disabled={!text.trim()}>
-            <Send />
-          </Button>
-        </div>
       </form>
     </section>
   );

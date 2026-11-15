@@ -11,7 +11,7 @@ Anything new goes to `plan.md` §8. Verify headless (Playwright from `spike/node
 
 ## Status (update at the end of every phase)
 
-**Module 2 is done (2026-11-15). Next up: Module 3 (Creator extras + polish)**, see [`plans/m3-creator-polish.md`](m3-creator-polish.md).
+**Module 2 is done (2026-11-15).** Module 3 is done too (except the optional deploy); see [`plans/m3-creator-polish.md`](m3-creator-polish.md).
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |
