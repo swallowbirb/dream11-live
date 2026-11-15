@@ -138,3 +138,21 @@ export type StreamToken = { url: string; token: string };
 
 /** S→C `stream:status`. viewerCount counts sockets in the room, minus the streamer's. */
 export type StreamStatus = { streamId: string; viewerCount: number };
+
+/** GET /api/channels/:id, and each row of GET /api/me/following. */
+export type ChannelInfo = {
+  id: string;
+  userId: string;
+  displayName: string;
+  bio: string | null;
+  tags: string[];
+  favouriteTeam: string | null;
+  followerCount: number;
+  /** Whether the caller follows this channel. */
+  following: boolean;
+  /** The channel's live stream, if it's live now. */
+  live: LiveStream | null;
+};
+
+/** S→C `notify`, to the user's own room (`user:<id>`). */
+export type Notify = { type: 'live'; stream: StreamInfo };

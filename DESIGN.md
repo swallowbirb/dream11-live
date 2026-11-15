@@ -375,7 +375,7 @@ All paths are served under `/api` (the web app proxies it to the server).
 | GET | `/streams/live?match=&lang=&style=` | browse live streams (with viewer count) |
 | GET | `/channels/:id` | channel page data |
 | POST/DELETE | `/channels/:id/follow` | follow / unfollow |
-| GET | `/me/following` | followed channels |
+| GET | `/me/following` | followed channels with their live stream, live first |
 | POST | `/streams` | go live (returns a publish token) |
 | POST | `/streams/:id/end` | end stream |
 | GET | `/streams/:id` | stream + channel + match |
@@ -411,7 +411,7 @@ The socket authenticates with the session token in `handshake.auth.token`.
 | C→S | `poll:vote` | `pollId, optionIndex` (first vote counts) |
 | S→C | `score:update` | `matchId`, `score` (runs, wickets, overs, batters, bowler, last 6 balls) |
 | S→C | `stream:status` | `streamId`, viewer count (sockets in the room minus the streamer) |
-| S→C | `notify` | go-live and other notifications |
+| S→C | `notify` | `{ type: 'live', stream }` to followers' `user:<id>` rooms when a creator goes live (every socket joins its user's room) |
 | C→S | `mod:action` | delete / timeout / ban, target |
 
 ---

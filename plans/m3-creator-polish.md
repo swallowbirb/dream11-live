@@ -12,11 +12,11 @@ camera and mic, one browser context per user), as in M1/M2, and look at the scre
 
 ## Status (update at the end of every phase)
 
-**Next up: P1 Follow + notify.**
+**Next up: P2 Subscriptions.**
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |
-| P1 Follow + notify | not started | |
+| P1 Follow + notify | done (2026-11-15) | Shared: `ChannelInfo` (display name, bio from `users.bio`, tags, favourite team, `followerCount`, `following` for the caller, `live: LiveStream \| null`), `Notify` `{ type: 'live', stream }`. Server: `src/channels.ts` (`GET /api/channels/:id`, `POST`/`DELETE /api/channels/:id/follow` (can't follow yourself), `GET /api/me/following` → `{ channels }` live first by viewers, then by name); `streams.ts` exports `withRefs` and `toLive`; `realtime.ts` puts every socket in `user:<id>` and exports `notifyFollowers(channelId, payload)`, called by `POST /api/streams`. Web: `components/channel/FollowButton.tsx` (optimistic, hidden on your own channel, invalidates `['channel', id]` and `['following']`), `components/channel/ChannelRow.tsx`, `pages/Channel.tsx` (`ChannelPage`, `useChannel` (5 s refetch), banner gradient, live `StreamCard` or offline card, skeleton; on phones the follow button gets its own row), `pages/Following.tsx` (Live · N, then Offline, designed empty state), `hooks/useNotify.ts` (called in `AppShell`: opens the socket at login so the user counts as online, toast with a Watch action). Watch: follow button on the creator bar. `pages/Placeholder.tsx` removed (no placeholders left). Verified headless: priya follows Rohit on his channel (0 → 1 follower), waits on /matches, Rohit goes live from the dashboard, priya gets the toast and Watch opens the stream (both videos), /following shows him under Live, then offline after End. Phone width checked. |
 | P2 Subscriptions | not started | |
 | P3 Moderation | not started | |
 | P4 Polish pass | not started | |

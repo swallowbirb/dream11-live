@@ -4,7 +4,7 @@ import type { Match, Stream, Channel } from '@prisma/client';
 import { prisma } from './db';
 import { requireUser } from './auth';
 import { livekit } from './video/livekit';
-import { viewerCount } from './realtime';
+import { notifyFollowers, viewerCount } from './realtime';
 
 const video = livekit;
 
@@ -36,7 +36,12 @@ export const toStream = (s: Stream & { channel: Channel; match: Match | null }):
   match: s.match ? toMatch(s.match) : null,
 });
 
-const withRefs = { channel: true, match: true } as const;
+export const withRefs = { channel: true, match: true } as const;
+
+export const toLive = (s: Stream & { channel: Channel; match: Match | null }): LiveStream => ({
+  ...toStream(s),
+  viewerCount: viewerCount(s.id, s.channel.userId),
+});
 
 async function liveStreams(matchId?: string): Promise<LiveStream[]> {
   const rows = await prisma.stream.findMany({
@@ -45,7 +50,7 @@ async function liveStreams(matchId?: string): Promise<LiveStream[]> {
     orderBy: { startedAt: 'desc' },
   });
   return rows
-    .map((s) => ({ ...toStream(s), viewerCount: viewerCount(s.id, s.channel.userId) }))
+    .map(toLive)
     .sort((a, b) => b.viewerCount - a.viewerCount);
 }
 
@@ -89,7 +94,9 @@ export async function streamRoutes(app: FastifyInstance) {
     });
     await prisma.stream.update({ where: { id: stream.id }, data: { providerRef: stream.id } });
     const token = await video.getPublishToken(stream.id, req.user.id, req.user.name);
-    return { stream: toStream(stream), url: video.url, token };
+    const info = toStream(stream);
+    await notifyFollowers(req.user.channelId, { type: 'live', stream: info });
+    return { stream: info, url: video.url, token };
   });
 
   app.post<{ Params: { id: string } }>('/api/streams/:id/end', { preHandler: requireUser }, async (req, reply) => {

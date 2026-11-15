@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io';
-import { ChatSend, EV, ReactionBatch, type ChatMessage, type ReactionBurst, type ReactionCounts, type StreamStatus } from '@d11/shared';
+import { ChatSend, EV, ReactionBatch, type ChatMessage, type Notify, type ReactionBurst, type ReactionCounts, type StreamStatus } from '@d11/shared';
 import type { ChatMessage as ChatRow, User } from '@prisma/client';
 import { prisma } from './db';
 import { userForToken } from './auth';
@@ -58,6 +58,13 @@ export function viewerCount(streamId: string, ownerUserId: string) {
   return n;
 }
 
+/** `notify` to every follower of a channel who has a socket open (each socket is in its `user:<id>` room). */
+export async function notifyFollowers(channelId: string, payload: Notify) {
+  if (!ioRef) return;
+  const follows = await prisma.follow.findMany({ where: { channelId }, select: { followerId: true } });
+  if (follows.length) ioRef.to(follows.map((f) => `user:${f.followerId}`)).emit(EV.notify, payload);
+}
+
 export function setupRealtime(io: Server) {
   ioRef = io;
   setInterval(() => flushReactions(io), FLUSH_MS);
@@ -81,6 +88,7 @@ export function setupRealtime(io: Server) {
 
   io.on('connection', (socket: Socket) => {
     const user = socket.data.user as SocketUser;
+    socket.join(`user:${user.id}`);
 
     socket.on(EV.roomJoin, async (streamId: string) => {
       if (typeof streamId !== 'string') return;

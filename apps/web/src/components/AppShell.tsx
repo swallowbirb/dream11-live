@@ -3,6 +3,7 @@ import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 import { Header } from './Header';
 import { navItems } from './nav';
+import { useNotify } from '@/hooks/useNotify';
 
 function BottomTabs() {
   return (
@@ -33,6 +34,7 @@ function BottomTabs() {
 export function AppShell() {
   const token = useSession((s) => s.token);
   const location = useLocation();
+  useNotify();
   if (!token) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return (
     <div className="min-h-dvh pb-16 md:pb-0">

@@ -5,12 +5,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { AppShell } from '@/components/AppShell';
 import { AuthPage } from '@/pages/Auth';
-import { Placeholder } from '@/pages/Placeholder';
 import { ProfilePage } from '@/pages/Profile';
 import { DashboardPage } from '@/pages/Dashboard';
 import { WatchPage } from '@/pages/Watch';
 import { HomePage, MatchesPage } from '@/pages/Home';
 import { MatchPage } from '@/pages/Match';
+import { ChannelPage } from '@/pages/Channel';
+import { FollowingPage } from '@/pages/Following';
 import './index.css';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
@@ -24,10 +25,10 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/matches', element: <MatchesPage /> },
       { path: '/matches/:id', element: <MatchPage /> },
-      { path: '/c/:channelId', element: <Placeholder title="Channel" /> },
+      { path: '/c/:channelId', element: <ChannelPage /> },
       { path: '/watch/:streamId', element: <WatchPage /> },
       { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/following', element: <Placeholder title="Following" /> },
+      { path: '/following', element: <FollowingPage /> },
       { path: '/profile', element: <ProfilePage /> },
     ],
   },

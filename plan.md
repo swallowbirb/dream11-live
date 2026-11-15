@@ -164,7 +164,7 @@ New ideas that come up during the build go here, unbuilt.
 | M2 | S1 ReplayFeed + matches | done: ReplayFeed (6-over IND innings), `score:update` to stream rooms, `pnpm replay` |
 | M2 | S2 Browse pages | done: home, matches, match page, cards, scorecard strip on the player |
 | M2 | S3 Reactions + polls | done: emoji bursts + hype meter, polls with live results |
-| M3 | S1 Follow + notify | not started |
+| M3 | S1 Follow + notify | done: follow/unfollow, channel page, Following page, go-live toast |
 | M3 | S2 Subs + mod (thin) | not started |
 | M3 | S3 Polish pass | not started |
 | M3 | S4 Deploy (stretch) | not started |

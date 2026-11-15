@@ -15,6 +15,8 @@ import { usePoll } from '@/hooks/usePoll';
 import { PollCard } from '@/components/poll/PollCard';
 import { EmojiTray, HypeMeter, ReactionOverlay } from '@/components/player/Reactions';
 import { api } from '@/lib/api';
+import { FollowButton } from '@/components/channel/FollowButton';
+import { useChannel } from '@/pages/Channel';
 
 export function WatchPage() {
   const { streamId } = useParams();
@@ -39,6 +41,7 @@ export function WatchPage() {
     staleTime: Infinity,
   });
 
+  const channel = useChannel(stream?.channel.id).data?.channel;
   const score = room.score ?? stream?.match?.score ?? null;
 
   if (isPending) return <div className="aspect-video animate-pulse rounded-2xl bg-muted" />;
@@ -109,6 +112,7 @@ export function WatchPage() {
               )}
             </div>
           </div>
+          {channel && <FollowButton channel={channel} className="shrink-0" />}
         </div>
       </div>
       <ChatPanel
