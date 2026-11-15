@@ -1,8 +1,19 @@
 # Project rules for Shubham Dream11
 
 A prototype live-streaming platform for cricket creators and fans (Twitch-style, with match pages, live
-scorecard and polls). The design is in `DESIGN.md`. The stack is not final (see DESIGN.md §5.1), so fill in
-the build, typecheck and test commands under "Commands" once it is chosen.
+scorecard and polls). The design is in `DESIGN.md`; the stack is decided there (§5.1). The build order,
+timeboxes and prototype cuts are in `plan.md` (3 modules, steps, then per-step phase files under `plans/`).
+
+## Speed over perfection (read first)
+
+The whole prototype has a **4–5 hour budget**. This overrides polish and completeness everywhere else here.
+
+- Build the happy path only. If it works when used normally in a demo, it's done.
+- Stay inside the current step's scope and timebox in `plan.md`. Don't build anything `plan.md` lists as cut,
+  even if `DESIGN.md` lists it under "Build now". Where they disagree, `plan.md` wins for the prototype.
+- New ideas go to `plan.md` §8 (Parking lot), not into code. If a step runs over, cut using `plan.md` §7.
+- Prefer seed data, hardcoded constants and in-memory state over settings screens and editors.
+- Update the progress table in `plan.md` §9 when a step is done.
 
 ## Machine and paths (Linux)
 
@@ -29,7 +40,9 @@ the build, typecheck and test commands under "Commands" once it is chosen.
 
 ## Commands
 
-TODO: fill in once the stack is chosen: install, dev server, build, typecheck, test (all, and a single file).
+TODO: fill in during `plan.md` M1 S1 (scaffold): install, dev server, build, typecheck, test (all, and a
+single file). Stack: pnpm monorepo, `apps/web` (Vite + React), `apps/server` (Fastify + Socket.IO + Prisma on
+SQLite), `packages/shared`.
 
 ## Build and typecheck
 
