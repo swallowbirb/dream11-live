@@ -125,6 +125,8 @@ export type StreamInfo = {
   endedAt: string | null;
   channel: { id: string; displayName: string; userId: string };
   match: MatchSummary | null;
+  /** Demo bot streams: looping clips (paths under the web app's public/) instead of LiveKit. */
+  bot: { match: string; cam: string } | null;
 };
 
 /** A match on browse pages, with how many creators are live on it. */

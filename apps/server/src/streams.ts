@@ -34,7 +34,15 @@ export const toStream = (s: Stream & { channel: Channel; match: Match | null }):
   endedAt: s.endedAt?.toISOString() ?? null,
   channel: { id: s.channel.id, displayName: s.channel.displayName, userId: s.channel.userId },
   match: s.match ? toMatch(s.match) : null,
+  bot: botMedia(s.providerRef),
 });
+
+// Bot streams store "bot:<match clip>,<cam clip>" in providerRef (see bots/director.ts).
+function botMedia(ref: string | null): StreamInfo['bot'] {
+  if (!ref?.startsWith('bot:')) return null;
+  const [match, cam] = ref.slice(4).split(',');
+  return { match: `/bots/${match}`, cam: `/bots/${cam}` };
+}
 
 export const withRefs = { channel: true, match: true } as const;
 
@@ -118,7 +126,7 @@ export async function streamRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { id: string } }>('/api/streams/:id/token', { preHandler: requireUser }, async (req, reply) => {
     const s = await prisma.stream.findUnique({ where: { id: req.params.id } });
-    if (!s || s.status !== 'live') return reply.code(404).send({ error: 'Stream is not live' });
+    if (!s || s.status !== 'live' || s.providerRef?.startsWith('bot:')) return reply.code(404).send({ error: 'Stream is not live' });
     return { url: video.url, token: await video.getViewerToken(s.id, req.user.id, req.user.name) };
   });
 }

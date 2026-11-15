@@ -6,6 +6,7 @@ import { flag, type StreamInfo, type StreamToken } from '@d11/shared';
 import { UserAvatar } from '@/components/Header';
 import { LivePill } from '@/components/LivePill';
 import { LivePlayer } from '@/components/player/LivePlayer';
+import { BotPlayer } from '@/components/player/BotPlayer';
 import { Scorecard } from '@/components/player/Scorecard';
 import { ViewerCount } from '@/components/ViewerCount';
 import { ChatPanel } from '@/components/chat/ChatPanel';
@@ -38,12 +39,19 @@ export function WatchPage() {
   const { data: tok } = useQuery({
     queryKey: ['stream-token', streamId],
     queryFn: () => api<StreamToken>(`/streams/${streamId}/token`),
-    enabled: live,
+    enabled: live && !stream?.bot,
     staleTime: Infinity,
   });
 
   const channel = useChannel(stream?.channel.id).data?.channel;
   const score = room.score ?? stream?.match?.score ?? null;
+
+  const overlay = (
+    <>
+      <ReactionOverlay floaters={reactions.floaters} done={reactions.done} />
+      {pollCard('pointer-events-auto absolute top-3 left-3 hidden w-72 sm:block')}
+    </>
+  );
 
   if (isPending) return <WatchSkeleton />;
   if (!stream)
@@ -60,17 +68,14 @@ export function WatchPage() {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0 space-y-4">
-        {live && tok ? (
+        {live && stream.bot ? (
+          <BotPlayer match={stream.bot.match} cam={stream.bot.cam} seed={stream.id} overlay={overlay} />
+        ) : live && tok ? (
           <LivePlayer
             url={tok.url}
             token={tok.token}
             onPublisherLeft={() => qc.invalidateQueries({ queryKey: ['stream', streamId] })}
-            overlay={
-              <>
-                <ReactionOverlay floaters={reactions.floaters} done={reactions.done} />
-                {pollCard('pointer-events-auto absolute top-3 left-3 hidden w-72 sm:block')}
-              </>
-            }
+            overlay={overlay}
           />
         ) : live ? (
           <div className="aspect-video animate-pulse rounded-2xl bg-ink/80" />

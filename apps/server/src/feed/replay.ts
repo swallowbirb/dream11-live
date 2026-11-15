@@ -102,7 +102,8 @@ export class ReplayFeed implements MatchFeed {
   private timer: NodeJS.Timeout | null = null;
   private run = 0; // bumped on start/stop so an in-flight tick from an older run doesn't reschedule
 
-  constructor(path: string | URL, private onScore: OnScore) {
+  /** loopDelayMs: replay again from the first ball this long after the innings ends (demo bots). */
+  constructor(path: string | URL, private onScore: OnScore, private opts: { loopDelayMs?: number } = {}) {
     this.file = JSON.parse(readFileSync(path, 'utf8'));
     this.balls = this.file.overs.flatMap((o) => o.balls.trim().split(/\s+/).map((token) => ({ bowler: o.bowler, token })));
   }
@@ -145,8 +146,9 @@ export class ReplayFeed implements MatchFeed {
     this.innings!.play(ball.bowler, ball.token);
     await this.publish();
     if (run !== this.run) return;
-    if (this.innings!.finished || this.pos >= this.balls.length) this.timer = null;
-    else this.schedule(run);
+    if (!(this.innings!.finished || this.pos >= this.balls.length)) this.schedule(run);
+    else if (this.opts.loopDelayMs) this.timer = setTimeout(() => void this.start(this.speed), this.opts.loopDelayMs);
+    else this.timer = null;
   }
 
   private async publish() {

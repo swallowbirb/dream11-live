@@ -321,6 +321,21 @@ Track conventions for browser streams, so the player knows what each track is:
 Clips record the composited view (match + facecam in the creator's default layout) through LiveKit's room
 composite egress.
 
+### 5.6 Demo bots (prototype)
+
+So the site never looks empty in a demo, the server runs six always-live bot creators (`apps/server/src/bots/`,
+off with `BOTS=0`). They don't use LiveKit: a bot stream's `providerRef` is `bot:<match clip>,<cam clip>`,
+`StreamInfo.bot` carries the two clip URLs, and the Watch page plays them as looping `<video>` elements in the
+same player frame (PiP / side by side, two volume sliders). The clips live in `apps/web/public/bots/`.
+
+A director ticks every second. Each bot stream gets a simulated audience that drifts within the persona's
+range and is added to the real socket count. While at least one person has a bot stream open, the director
+also posts chat from 60 seeded chatter accounts (about a quarter of them subscribed, so some show SUB badges),
+adds reaction taps, and runs a poll every 2–4 minutes that the chatters vote in. Every ball from the match
+feed sets off event chat and reaction bursts (six, four, wicket). Bot chat is pruned to the newest 200
+messages per stream. With bots on, the ReplayFeed starts by itself (`REPLAY_SPEED`, default 6) and loops 30 s
+after each innings.
+
 ---
 
 ## 6. Data model

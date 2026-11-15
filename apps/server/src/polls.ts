@@ -22,7 +22,7 @@ async function pollState(pollId: string): Promise<PollState | null> {
   };
 }
 
-async function broadcast(io: Server, pollId: string) {
+export async function broadcast(io: Server, pollId: string) {
   const poll = await pollState(pollId);
   if (poll) io.to(roomOf(poll.streamId)).emit(EV.pollUpdate, { streamId: poll.streamId, poll } satisfies PollUpdate);
   return poll;
@@ -54,6 +54,20 @@ export function pollSockets(io: Server, socket: Socket, userId: string) {
   });
 }
 
+/** Opens a poll on a stream, closing any open one first. */
+export async function openPoll(io: Server, streamId: string, question: string, options: string[]) {
+  const open = await prisma.poll.findMany({ where: { streamId, status: 'open' }, select: { id: true } });
+  await prisma.poll.updateMany({ where: { streamId, status: 'open' }, data: { status: 'closed' } });
+  for (const o of open) await broadcast(io, o.id);
+  const created = await prisma.poll.create({ data: { streamId, question, optionsJson: JSON.stringify(options) } });
+  return broadcast(io, created.id);
+}
+
+export async function closePoll(io: Server, pollId: string) {
+  await prisma.poll.update({ where: { id: pollId }, data: { status: 'closed' } });
+  return broadcast(io, pollId);
+}
+
 /** Creator-only poll start/close. Starting a poll closes any open one on the stream. */
 export const pollRoutes = (io: Server) => async (app: FastifyInstance) => {
   app.post<{ Params: { id: string } }>('/api/streams/:id/polls', { preHandler: requireUser }, async (req, reply) => {
@@ -61,19 +75,12 @@ export const pollRoutes = (io: Server) => async (app: FastifyInstance) => {
     if (!s || s.channelId !== req.user.channelId || s.status !== 'live') return reply.code(404).send({ error: 'Stream not live' });
     const parsed = PollCreate.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'A question and 2–4 options are needed' });
-    const open = await prisma.poll.findMany({ where: { streamId: s.id, status: 'open' }, select: { id: true } });
-    await prisma.poll.updateMany({ where: { streamId: s.id, status: 'open' }, data: { status: 'closed' } });
-    for (const o of open) await broadcast(io, o.id);
-    const created = await prisma.poll.create({
-      data: { streamId: s.id, question: parsed.data.question, optionsJson: JSON.stringify(parsed.data.options) },
-    });
-    return { poll: await broadcast(io, created.id) };
+    return { poll: await openPoll(io, s.id, parsed.data.question, parsed.data.options) };
   });
 
   app.post<{ Params: { id: string } }>('/api/polls/:id/close', { preHandler: requireUser }, async (req, reply) => {
     const p = await prisma.poll.findUnique({ where: { id: req.params.id }, include: { stream: true } });
     if (!p || p.stream.channelId !== req.user.channelId) return reply.code(404).send({ error: 'Poll not found' });
-    await prisma.poll.update({ where: { id: p.id }, data: { status: 'closed' } });
-    return { poll: await broadcast(io, p.id) };
+    return { poll: await closePoll(io, p.id) };
   });
 };

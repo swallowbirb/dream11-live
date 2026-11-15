@@ -78,6 +78,11 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
     the seed (upserts) and the server, which also serves `apps/web/dist` with an SPA fallback on the same origin
     (no CORS). Needs `PORT`, `DATABASE_URL` (SQLite file on a persistent disk), `LIVEKIT_*` from the environment.
     `SITE=https://… pnpm replay` drives the replay on a deployed site (replay routes have no auth).
+  - **Demo bots** (DESIGN §5.6): on by default, the server keeps 6 bot creator streams live and starts the
+    replay itself, looping (`REPLAY_SPEED`, default 6 = 5 s a ball). `BOTS=0` turns both off. The personas,
+    chat lines and polls are in `apps/server/src/bots/script.ts`. Clips are in `apps/web/public/bots/`.
+    `apps/web/scripts/bot-media.sh` regenerates the placeholder clips; swap in real WebM footage under the same
+    names.
   - `pnpm db:migrate` (`prisma migrate dev`, after editing `apps/server/prisma/schema.prisma`), `pnpm db:seed`
     (`apps/server/prisma/seed.ts`, upserts, safe to re-run). The DB is `apps/server/prisma/dev.db` (gitignored).
   - **Seed users** (password `pass` for all): creators `RohitReacts`, `AussieAnalyst`, `CoverDriveComedy`;

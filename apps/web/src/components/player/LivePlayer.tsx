@@ -53,12 +53,8 @@ export function LivePlayer({
   overlay?: ReactNode;
 }) {
   const [tracks, setTracks] = useState<Tracks>({});
-  const [layout, setLayout] = useState<Layout>('pip');
-  const [matchVol, setMatchVol] = useState(0.8);
-  const [creatorVol, setCreatorVol] = useState(1);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const roomRef = useRef<Room | null>(null);
-  const frame = useRef<HTMLDivElement>(null);
   const leftRef = useRef(onPublisherLeft);
   leftRef.current = onPublisherLeft;
 
@@ -85,8 +81,60 @@ export function LivePlayer({
   const camVideo = tracks[Track.Source.Camera] as RemoteVideoTrack | undefined;
   const matchAudio = tracks[Track.Source.ScreenShareAudio] as RemoteAudioTrack | undefined;
   const micAudio = tracks[Track.Source.Microphone] as RemoteAudioTrack | undefined;
-  const both = !!(matchVideo && camVideo);
   const main = matchVideo ?? camVideo;
+
+  return (
+    <PlayerFrame
+      main={main && ((cls) => <VideoEl track={main} className={cls} />)}
+      cam={matchVideo && camVideo && ((cls) => <VideoEl track={camVideo} className={cls} />)}
+      audio={(v) => (
+        <>
+          {matchAudio && <AudioEl track={matchAudio} volume={v.match} />}
+          {micAudio && <AudioEl track={micAudio} volume={v.creator} />}
+        </>
+      )}
+      hasMatchAudio={!!matchAudio}
+      hasMicAudio={!!micAudio}
+      audioBlocked={audioBlocked}
+      onUnmute={() => roomRef.current?.startAudio().then(() => setAudioBlocked(false))}
+      overlay={overlay}
+    />
+  );
+}
+
+export type Volumes = { match: number; creator: number };
+type Render = (className: string, v: Volumes) => ReactNode;
+
+/**
+ * The player frame and controls shared by LivePlayer and BotPlayer: main video, facecam as draggable PiP or
+ * side by side, overlay, unmute prompt, layout toggle and the two volume sliders.
+ */
+export function PlayerFrame({
+  main,
+  cam,
+  audio,
+  hasMatchAudio,
+  hasMicAudio,
+  audioBlocked,
+  onUnmute,
+  overlay,
+}: {
+  main?: Render | false;
+  /** Only when there is a separate match video to put it next to. */
+  cam?: Render | false;
+  audio?: (v: Volumes) => ReactNode;
+  hasMatchAudio: boolean;
+  hasMicAudio: boolean;
+  audioBlocked: boolean;
+  onUnmute: () => void;
+  overlay?: ReactNode;
+}) {
+  const [layout, setLayout] = useState<Layout>('pip');
+  const [matchVol, setMatchVol] = useState(0.8);
+  const [creatorVol, setCreatorVol] = useState(1);
+  const frame = useRef<HTMLDivElement>(null);
+  const v: Volumes = { match: matchVol, creator: creatorVol };
+  const both = !!(main && cam);
 
   return (
     <div className="space-y-2">
@@ -111,10 +159,8 @@ export function LivePlayer({
             both && layout === 'side' ? 'grid size-full grid-cols-[2fr_1fr] items-center gap-1 bg-ink' : 'contents'
           }
         >
-          {main && <VideoEl track={main} className="size-full object-contain" />}
-          {both && layout === 'side' && (
-            <VideoEl track={camVideo!} className="aspect-video w-full rounded-md object-cover" />
-          )}
+          {main && main('size-full object-contain', v)}
+          {both && layout === 'side' && cam('aspect-video w-full rounded-md object-cover', v)}
         </div>
 
         {both && layout === 'pip' && (
@@ -126,7 +172,7 @@ export function LivePlayer({
             className="absolute right-3 bottom-3 z-10 aspect-video w-1/4 min-w-28 cursor-grab overflow-hidden rounded-lg border-2 border-white/80 shadow-xl active:cursor-grabbing"
             data-testid="pip"
           >
-            <VideoEl track={camVideo!} className="pointer-events-none size-full object-cover" />
+            {cam('pointer-events-none size-full object-cover', v)}
           </motion.div>
         )}
 
@@ -134,7 +180,7 @@ export function LivePlayer({
 
         {audioBlocked && main && (
           <button
-            onClick={() => roomRef.current?.startAudio().then(() => setAudioBlocked(false))}
+            onClick={onUnmute}
             className="absolute inset-x-0 top-3 z-20 mx-auto flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-lg active:scale-95"
           >
             <VolumeX className="size-4 text-brand" /> Tap to unmute
@@ -142,8 +188,7 @@ export function LivePlayer({
         )}
       </div>
 
-      {matchAudio && <AudioEl track={matchAudio} volume={matchVol} />}
-      {micAudio && <AudioEl track={micAudio} volume={creatorVol} />}
+      {audio?.(v)}
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-surface px-4 py-3 shadow-sm">
         {both && (
@@ -166,8 +211,8 @@ export function LivePlayer({
             ))}
           </div>
         )}
-        <VolumeControl label="Match" Icon={Volume2} value={matchVol} onChange={setMatchVol} disabled={!matchAudio} />
-        <VolumeControl label="Creator" Icon={Mic} value={creatorVol} onChange={setCreatorVol} disabled={!micAudio} />
+        <VolumeControl label="Match" Icon={Volume2} value={matchVol} onChange={setMatchVol} disabled={!hasMatchAudio} />
+        <VolumeControl label="Creator" Icon={Mic} value={creatorVol} onChange={setCreatorVol} disabled={!hasMicAudio} />
       </div>
     </div>
   );

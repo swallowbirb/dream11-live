@@ -7,6 +7,7 @@ import { userForToken } from './auth';
 type SocketUser = NonNullable<Awaited<ReturnType<typeof userForToken>>>;
 import { roomOf } from './rooms';
 import { pollJoin, pollSockets } from './polls';
+import { botViewers } from './bots/viewers';
 export { roomOf };
 
 // streamId → the streamer's user id and channel (creator badge, viewer count, sub badges). Streams never change owner.
@@ -53,13 +54,40 @@ function flushReactions(io: Server) {
   }
 }
 
-/** Sockets in a stream's room minus the streamer's (same count as stream:status). For REST listings. */
+/** Sockets in a stream's room minus the streamer's, plus a bot stream's simulated audience. Same as stream:status. */
 export function viewerCount(streamId: string, ownerUserId: string) {
   const ids = ioRef?.sockets.adapter.rooms.get(roomOf(streamId));
-  if (!ids) return 0;
-  let n = 0;
-  for (const id of ids) if ((ioRef!.sockets.sockets.get(id)?.data.user as SocketUser | undefined)?.id !== ownerUserId) n++;
+  let n = botViewers.get(streamId) ?? 0;
+  for (const id of ids ?? []) if ((ioRef!.sockets.sockets.get(id)?.data.user as SocketUser | undefined)?.id !== ownerUserId) n++;
   return n;
+}
+
+/** Whether anyone has the stream open (bots only chat to rooms with an audience). */
+export const isWatched = (streamId: string) => (ioRef?.sockets.adapter.rooms.get(roomOf(streamId))?.size ?? 0) > 0;
+
+export async function broadcastCount(streamId: string) {
+  const owner = await streamOwner(streamId);
+  if (!ioRef || !owner) return;
+  const status: StreamStatus = { streamId, viewerCount: viewerCount(streamId, owner) };
+  ioRef.to(roomOf(streamId)).emit(EV.streamStatus, status);
+}
+
+/** Saves a chat message and sends it to the room. The ban check is the caller's. */
+export async function postChat(streamId: string, userId: string, body: string, teamBadge?: string | null) {
+  const row = await prisma.chatMessage.create({
+    data: { streamId, userId, body, teamBadge: teamBadge || null },
+    include: { user: { select: { id: true, name: true } } },
+  });
+  const subs = await subscriberIds(streamId, [userId]);
+  ioRef?.to(roomOf(streamId)).emit(EV.chatMessage, { streamId, message: toMessage(row, await streamOwner(streamId), subs) });
+}
+
+/** Adds taps to the stream's next reaction:burst (and the hype meter). */
+export function addReactions(streamId: string, counts: ReactionCounts) {
+  const h = hype.get(streamId) ?? { pending: {}, window: [] };
+  hype.set(streamId, h);
+  for (const [emoji, n] of Object.entries(counts) as [keyof ReactionCounts, number][])
+    h.pending[emoji] = (h.pending[emoji] ?? 0) + n;
 }
 
 /** `notify` to every follower of a channel who has a socket open (each socket is in its `user:<id>` room). */
@@ -90,15 +118,6 @@ async function subscriberIds(streamId: string, userIds: string[]) {
 export function setupRealtime(io: Server) {
   ioRef = io;
   setInterval(() => flushReactions(io), FLUSH_MS);
-  async function broadcastCount(streamId: string) {
-    const owner = await streamOwner(streamId);
-    const sockets = await io.in(roomOf(streamId)).fetchSockets();
-    const status: StreamStatus = {
-      streamId,
-      viewerCount: sockets.filter((s) => (s.data.user as SocketUser).id !== owner).length,
-    };
-    io.to(roomOf(streamId)).emit(EV.streamStatus, status);
-  }
 
   // Session token from handshake.auth, same as the REST Bearer token.
   io.use(async (socket, next) => {
@@ -141,12 +160,7 @@ export function setupRealtime(io: Server) {
       const { streamId, body, teamBadge } = parsed.data;
       if (!socket.rooms.has(roomOf(streamId))) return;
       if (await isBanned(streamId, user.id)) return socket.emit(EV.chatRejected, { reason: 'You are banned from this chat' });
-      const row = await prisma.chatMessage.create({
-        data: { streamId, userId: user.id, body, teamBadge: teamBadge || null },
-        include: { user: { select: { id: true, name: true } } },
-      });
-      const subs = await subscriberIds(streamId, [user.id]);
-      io.to(roomOf(streamId)).emit(EV.chatMessage, { streamId, message: toMessage(row, await streamOwner(streamId), subs) });
+      await postChat(streamId, user.id, body, teamBadge);
     });
 
     pollSockets(io, socket, user.id);
@@ -185,10 +199,7 @@ export function setupRealtime(io: Server) {
     socket.on(EV.reactionBatch, (payload: unknown) => {
       const parsed = ReactionBatch.safeParse(payload);
       if (!parsed.success || !socket.rooms.has(roomOf(parsed.data.streamId))) return;
-      const h = hype.get(parsed.data.streamId) ?? { pending: {}, window: [] };
-      hype.set(parsed.data.streamId, h);
-      for (const [emoji, n] of Object.entries(parsed.data.counts) as [keyof ReactionCounts, number][])
-        h.pending[emoji] = (h.pending[emoji] ?? 0) + n;
+      addReactions(parsed.data.streamId, parsed.data.counts);
     });
 
     socket.on('disconnecting', () => {
