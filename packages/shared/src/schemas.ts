@@ -25,6 +25,7 @@ export const GoLiveBody = z.object({
 export type GoLiveBody = z.infer<typeof GoLiveBody>;
 
 export const ChatSend = z.object({
+  streamId: z.string().min(1),
   body: z.string().trim().min(1).max(300),
   teamBadge: z.string().max(8).optional(),
 });
@@ -63,3 +64,6 @@ export type StreamInfo = {
 
 /** Returned by POST /api/streams and GET /api/streams/:id/token. */
 export type StreamToken = { url: string; token: string };
+
+/** S→C `stream:status`. viewerCount counts sockets in the room, minus the streamer's. */
+export type StreamStatus = { streamId: string; viewerCount: number };

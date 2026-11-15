@@ -9,7 +9,7 @@ Anything new goes to `plan.md` §8.
 
 ## Status (update at the end of every phase)
 
-**Next up: P6 (chat + viewer count).** A new chat starts from here: read `CLAUDE.md`, then this file, then the next phase.
+**Module 1 is done (2026-11-15). Next up: Module 2 (Cricket + hype).** Its phase file `plans/m2-cricket-hype.md` doesn't exist yet: the next chat writes it from `plan.md` §4 Module 2 (same format as this file), then does its P1.
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Anything new goes to `plan.md` §8.
 | P3 Auth + shell | done (2026-11-15) | Server: `src/auth.ts` has signup/login/logout/me and `requireUser` (preHandler; sets `req.user` = `{ id, name, role, channelId }`), plus `userForToken(token)` for P6's socket auth. bcryptjs (pure JS). Signup as creator also creates the channel. Web: `lib/session.ts` (Zustand persisted as `d11-session`), `lib/api.ts` (`api()` / `post()` add the Bearer header, a 401 clears the session). `pages/Auth.tsx` (login + signup with role cards), `components/AppShell.tsx` (redirects to `/login` when logged out, header + bottom tabs), `components/Header.tsx` (also exports `Logo`, `UserAvatar`), `components/nav.ts`. Routes in `main.tsx`; every page except `/profile` is `pages/Placeholder.tsx` (added `/matches` and `/profile` for the bottom tabs). Gotcha: AuthPage only redirects a logged-in user when the mutation is idle, or the redirect races the post-signup navigate. |
 | P4 Go live | done (2026-11-15) | Server: `src/video/provider.ts` (interface) + `src/video/livekit.ts` (tokens; viewer identities get a random suffix), `src/streams.ts` (`GET /api/matches`, `POST /api/streams`, `POST /api/streams/:id/end`, `GET /api/streams/:id`, `GET /api/streams/:id/token` (live only, needs login); also exports `toMatch`/`toStream` mappers). Going live ends any other live stream of the same channel. Shared: `MatchSummary`, `StreamInfo`, `StreamToken`, `TEAM_FLAGS`/`flag()`, `LANGUAGES`. Web: `pages/Dashboard.tsx` (form, file picker + camera toggle via `createLocalTracks`, preview with PiP, play/pause, Go live / End, plus the "Viewer link" from P5 already), `components/LivePill.tsx`. Leaving the dashboard while live ends the stream. Verified headless: LiveKit Cloud room shows camera, mic, screen_share (simulcast), screen_share_audio; after End the room is empty and status is `ended`. The file `<video>` loops, so captured tracks don't end. |
 | P5 Player | done (2026-11-15) | `components/player/LivePlayer.tsx` (room + tracks by source, PiP drag via `motion/react` constrained to the frame, PiP / Side by side toggle, Match + Creator volume sliders, "Tap to unmute" when autoplay blocks audio; with one video it's shown full size and the toggle hides) and `pages/Watch.tsx` (stream info bar, offline card when `ended`; the viewer refetches the stream when the creator leaves the room). Dashboard End now calls the API *before* leaving the room, so that refetch already sees `ended`. Verified headless with two browsers: both videos play, both audio tracks carry sound, the PiP drags and stays inside, the Match slider only changes match audio, side by side works, the offline card shows after End. Headless check helpers are in a scratch `lib.mjs` (not in repo); `spike/check.mjs` shows the pattern. |
-| P6 Chat | not started | |
+| P6 Chat | done (2026-11-15) | Server: `src/realtime.ts` (socket auth via `userForToken`, `room:join` → `chat:history` to the joiner + count broadcast, `room:leave`, `chat:send` → Zod → save → `chat:message`, count re-broadcast on `disconnecting`). Every payload carries `streamId`. Viewer count = sockets in `stream:<id>` minus the streamer's (from a cached stream→owner map), not stored in the DB. Web: `lib/socket.ts` (one shared socket, re-created on token change, dropped on logout), `hooks/useStreamRoom.ts` (messages, viewerCount, send), `components/chat/ChatPanel.tsx` (team-badge picker from the match's teams, CREATOR badge, per-name colours, stick-to-bottom scroll), `components/ViewerCount.tsx`. Chat sits right of the player on desktop and under it on mobile; on the dashboard it's under the form while live. Verified headless with 4 browsers: counts 0→1→2→3→1, badges, history for a late joiner, phone layout. |
 
 ---
 
@@ -136,10 +136,10 @@ layout and mixes audio.
 
 ---
 
-## Module close (5 min)
+## Module close (5 min) — done 2026-11-15
 
-- Click-through of the module's "done when" in two browsers.
-- `plan.md` §9: mark M1 steps done. Note any cuts in §6/§7. Commit.
+- [x] Click-through of the module's "done when" in two browsers (headless: creator + 3 viewers, go live → watch → chat → end).
+- [x] `plan.md` §9: M1 steps marked done. Nothing was cut.
 
 ## Phase timing
 

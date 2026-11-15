@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { post } from '@/lib/api';
+import { disconnectSocket } from '@/lib/socket';
 import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 import { navItems } from './nav';
@@ -44,6 +45,7 @@ export function Header() {
 
   const logout = async () => {
     await post('/auth/logout').catch(() => {});
+    disconnectSocket();
     clear();
     qc.clear();
     navigate('/login');

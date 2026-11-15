@@ -160,7 +160,7 @@ New ideas that come up during the build go here, unbuilt.
 | M1 | S1 Scaffold | done: monorepo, both apps, full schema, Dream11 tokens |
 | M1 | S2 Auth + shell | done: signup/login/logout, shell, seed |
 | M1 | S3 Go live + watch | done: dashboard publish, player with PiP, layouts and audio mix |
-| M1 | S4 Chat | not started |
+| M1 | S4 Chat | done: chat with team + creator badges, live viewer count |
 | M2 | S1 ReplayFeed + matches | not started |
 | M2 | S2 Browse pages | not started |
 | M2 | S3 Reactions + polls | not started |

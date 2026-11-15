@@ -393,11 +393,14 @@ All paths are served under `/api` (the web app proxies it to the server).
 
 ### WebSocket events
 
+The socket authenticates with the session token in `handshake.auth.token`.
+
 | Direction | Event | Payload |
 | --- | --- | --- |
 | C→S | `room:join` / `room:leave` | `streamId` |
-| C→S | `chat:send` | `body, teamBadge` |
-| S→C | `chat:message` | message + user badges |
+| C→S | `chat:send` | `streamId, body, teamBadge` |
+| S→C | `chat:history` | `streamId`, last 50 messages (sent to the joiner) |
+| S→C | `chat:message` | `streamId`, message + user badges |
 | S→C | `chat:deleted` | `messageId` |
 | S→C | `chat:rejected` | `reason` (slow mode, banned, filtered…) |
 | C→S | `reaction:batch` | `{ emoji: count }` |
@@ -405,7 +408,7 @@ All paths are served under `/api` (the web app proxies it to the server).
 | S→C | `poll:update` | poll state + counts |
 | C→S | `poll:vote` | `pollId, optionIndex` |
 | S→C | `score:update` | match score |
-| S→C | `stream:status` | live / ended, viewer count |
+| S→C | `stream:status` | `streamId`, viewer count (sockets in the room minus the streamer) |
 | S→C | `notify` | go-live and other notifications |
 | C→S | `mod:action` | delete / timeout / ban, target |
 

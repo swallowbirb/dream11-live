@@ -3,6 +3,7 @@ import { Server } from 'socket.io';
 import { prisma } from './db';
 import { authRoutes } from './auth';
 import { streamRoutes } from './streams';
+import { setupRealtime } from './realtime';
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -18,8 +19,6 @@ await app.register(streamRoutes);
 
 // Socket.IO shares Fastify's HTTP server, so web only needs one proxy target.
 const io = new Server(app.server, { path: '/socket.io' });
-io.on('connection', (socket) => {
-  app.log.info({ id: socket.id }, 'socket connected');
-});
+setupRealtime(io);
 
 await app.listen({ port: PORT, host: '0.0.0.0' });
