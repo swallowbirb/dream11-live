@@ -1,6 +1,6 @@
 # Cricket Live Reaction Platform: Design Doc
 
-**Status:** Draft v1 · 2026-11-15
+**Status:** Draft v2 · 2026-11-15 (tech stack decided)
 **Scope:** Prototype
 
 > One line: a platform where cricket creators react live, and fans watch, chat and share the excitement together.
@@ -9,13 +9,12 @@
 
 ## 1. Overview
 
-A live-streaming platform for cricket, modelled on Twitch. Creators stream their own camera and commentary while
-a match is on. Viewers join, watch, chat and send instant emoji reactions, and the creator responds live.
+A live-streaming platform for cricket, modelled on Twitch. Creators stream **the match itself** with their own
+camera and commentary on top, the way a gamer streams a game on Twitch. Viewers join, watch, chat and send instant
+emoji reactions, and the creator responds live.
 
 The core mechanics (channels, going live, following, chat, clips, subscriptions) work like Twitch. On top of that
 the platform adds cricket-specific features: match pages, team badges, a live scorecard and polls.
-
-Creators stream only their own camera and commentary. Match footage and audio are not part of the product.
 
 ### What "prototype" means here
 
@@ -54,7 +53,16 @@ record is saved to the database, and logging in matches name + password against 
 - Go-live notifications: an in-app notification (bell + toast) when a followed creator goes live.
 
 **Going live**
-- **Stream key** for OBS (RTMP) and **browser go-live** (camera + mic straight from the page) for creators without OBS.
+- A stream has two parts: the **match feed** (video + match audio) and the **facecam** (camera + mic). Either can be
+  off: a creator can stream match only, facecam only, or both.
+- **Browser go-live** is the only way to go live in the prototype. The creator picks a match source and a facecam:
+  - **Screen / tab share** (`getDisplayMedia`, with tab audio): share the tab or window the match is playing in.
+  - **Local video file:** pick a file from disk. The page plays it in a hidden `<video>` and publishes it with
+    `captureStream()`, with play, pause and seek controls in the dashboard. This is how the prototype is tested with
+    downloaded older matches, with several test accounts each streaming a different file.
+  - **Camera + mic** for the facecam.
+  - Match and facecam are published as **separate tracks** (LiveKit), and the viewer's player arranges them (see
+    *Watching*).
 - The go-live form asks for: stream title, **linked match**, **supporting team** (optional), language and tags.
 - A creator dashboard with a stream preview, a chat panel, a viewer count, a reaction "hype meter", poll controls and
   a mod log.
@@ -68,7 +76,12 @@ record is saved to the database, and logging in matches name + password against 
 **Watching**
 - Player page: the video, a **live scorecard strip** (score, overs, current batters/bowler, last 6 balls), the
   creator's info + follow/subscribe buttons, and chat.
-- No attempt to sync the stream with the TV broadcast.
+- **Layouts** for browser streams (separate tracks): match full-size with a draggable, resizable **facecam
+  picture-in-picture** (default), side by side, or facecam only. The creator sets the default; each viewer can change
+  it for themselves.
+- **Audio mix:** separate volume sliders for **match audio** and **creator voice**, so viewers can turn the
+  commentary down and the creator up, or the other way round.
+- Fullscreen and theatre mode (chat beside a larger player).
 
 **Chat**
 - Real-time chat per stream with emotes.
@@ -102,6 +115,9 @@ record is saved to the database, and logging in matches name + password against 
 ### 3.2 Later (TODO)
 - **Reaction Wall:** a grid of many creators reacting to the same ball. Needs more live creators than testing can
   supply right now.
+- **OBS support:** an RTMP stream key through LiveKit Ingress, for creators who want their own layout in OBS. OBS
+  merges everything into one video, so per-viewer layouts and the audio mix won't apply to OBS streams. Add a
+  `stream_key` column to `channels` and a `createIngest` method to `VideoProvider`.
 - **Auto-clips** triggered by score events (wicket, six, last ball).
 - **Predictions** with points and per-stream leaderboards.
 - **Real payments** for subscriptions, plus UPI tipping.
@@ -168,7 +184,7 @@ locking them in.
 5. **Player page:** video, emoji tray, scorecard strip, creator bar (follow / subscribe), chat, poll overlay.
 6. **Channel page:** banner, about section, live player or offline card, clips, subscription tiers.
 7. **Following:** live first, then offline creators.
-8. **Creator dashboard:** go-live setup (stream key / browser), preview, chat with mod actions, viewer count, hype
+8. **Creator dashboard:** go-live setup (source picker: screen/tab or file, camera, mic), preview, chat with mod actions, viewer count, hype
    meter, poll controls, mod settings (slow mode, word filter, mods list), subscriber list, tier editor.
 9. **Subscribe modal:** tier cards and a mock checkout confirmation.
 10. **Clip viewer:** clip player, title, creator, linked match, share button.
@@ -177,17 +193,53 @@ locking them in.
 
 ## 5. Architecture
 
-### 5.1 Recommended stack (not final)
+### 5.1 Tech stack (decided)
 
-| Piece | Recommendation | Why |
+**Frontend**
+
+| Piece | Choice | Why |
 | --- | --- | --- |
-| Frontend | Next.js (React) + Tailwind CSS + Framer Motion | Fast to build a polished UI, good animation tooling |
-| Backend API | Node.js (Fastify or NestJS) | Same language as the frontend, good WebSocket support |
-| Realtime | Socket.IO | Rooms per stream, reconnection built in |
-| Database | PostgreSQL (or SQLite to start) | Relational data with simple joins |
-| Pub/sub + counters | Redis (optional for the prototype; in-memory works with one server) | Chat fan-out and reaction counters |
-| Video | **LiveKit** (browser go-live + RTMP ingress + recording/egress) or **Mux** / **AWS IVS** | Don't build video infrastructure |
-| Match data | A cricket data API (e.g. CricketData.org, Roanuz, Sportmonks) | Fixtures and live scores |
+| Framework | **Vite + React + TypeScript** (SPA) | No SEO needs and a separate backend, so a framework with server rendering adds nothing |
+| Styling | **Tailwind CSS** + **shadcn/ui** | Dream11 tokens become Tailwind theme colours; shadcn gives polished, accessible components we own and restyle |
+| Animation | **Framer Motion** (Motion) | Emoji bursts, ticking scores, page transitions |
+| Server state | **TanStack Query** | Caching, refetching, skeleton loaders |
+| Client state | **Zustand** | Chat buffer, reaction counts, session |
+| Routing | **React Router** | |
+| Realtime | **socket.io-client** | Matches the backend |
+| Video UI | **LiveKit React components** | Browser go-live and the viewer player |
+| Icons / fonts | **Lucide**; **Inter** / **Barlow** (Google Fonts) | |
+
+**Backend**
+
+| Piece | Choice | Why |
+| --- | --- | --- |
+| Runtime | **Node.js + TypeScript** | One language across the stack |
+| HTTP | **Fastify** | Light and fast, little ceremony |
+| Realtime | **Socket.IO** | Rooms per stream, reconnection and acks built in |
+| ORM | **Prisma** | The schema file is the data model, with migrations and typed queries |
+| Database | **PostgreSQL** (SQLite allowed for local dev) | Relational data with simple joins |
+| Validation | **Zod** | Shared schemas validate REST bodies and socket payloads |
+| Redis | **Not used** | One server process: reaction counters, slow-mode timers and timeouts live in memory. Add Redis only when running more than one instance. |
+
+**Services and hosting**
+
+| Piece | Choice | Notes |
+| --- | --- | --- |
+| Video | **LiveKit Cloud** | Browser go-live (WebRTC), recording via **Egress** for clips. OBS support later via LiveKit **Ingress** (RTMP). Viewers watch over WebRTC; fine at prototype scale. Kept behind a `VideoProvider` adapter so it can be swapped later. |
+| Match data | **Replay feed first**, real cricket API later | See 5.4 |
+| Frontend hosting | **Vercel** (static SPA) | |
+| Backend hosting | **Railway** | Must be a long-running server: WebSockets don't work on serverless functions |
+| Database hosting | **Railway Postgres** (or Neon) | |
+
+**Repo layout:** a pnpm monorepo.
+
+```
+apps/web          Vite + React frontend
+apps/server       Fastify + Socket.IO backend, Prisma schema
+packages/shared   Socket event names, payload types, Zod schemas, shared constants
+```
+
+`packages/shared` keeps the client and server agreeing on every event and payload.
 
 ### 5.2 System sketch
 
@@ -195,24 +247,23 @@ locking them in.
  Browser (viewer/creator)
    │  HTTPS (REST)          WebSocket (chat, reactions, polls, notifications)
    ▼                         ▼
- ┌──────────────────────────────────────┐
- │            Backend (Node)            │
- │  REST API · Socket.IO rooms · jobs   │
- └──────┬──────────────┬────────────────┘
-        │              │
-   PostgreSQL       Redis (optional)
-        │
-   Video provider  ◄── OBS (RTMP) / browser (WebRTC)
-   (ingest, playback, recording for clips)
-        ▲
-   Match-data poller ── cricket data API (every 10–30s for live matches)
+ ┌──────────────────────────────────────────────┐
+ │         Backend (Node · Fastify · Socket.IO)  │
+ │  REST API · socket rooms · in-memory counters │
+ │  MatchFeed job · LiveKit webhooks             │
+ └──────┬───────────────┬───────────────┬───────┘
+        │               │               │
+   PostgreSQL      LiveKit Cloud     MatchFeed
+   (Prisma)        ▲ publish/egress  ├─ ReplayFeed (recorded match, ball by ball)
+                   │                 └─ ApiFeed (cricket data API, later)
+          browser (WebRTC)
 ```
 
 ### 5.3 Key flows
 
 **Go live**
 1. The creator fills in the go-live form and the backend creates a `stream` row (status `starting`).
-2. The backend asks the video provider for an ingest (RTMP URL + key, or a WebRTC token) and returns it.
+2. The backend asks the video provider for a WebRTC publish token and returns it.
 3. When the provider signals the stream is active (webhook or polling), the status becomes `live`. Followers get a
    notification and the stream appears on the match page.
 4. When the stream ends, the status becomes `ended` and the stream leaves the listings.
@@ -238,8 +289,37 @@ locking them in.
 2. The subscriber badge appears immediately.
 
 **Match data**
-1. A background job fetches fixtures daily and live scores every 10–30s for live matches.
-2. It upserts `matches` and broadcasts `score:update` to every stream room linked to that match.
+1. The active `MatchFeed` produces fixtures and ball-by-ball score updates (see 5.4).
+2. The backend upserts `matches` and broadcasts `score:update` to every stream room linked to that match.
+
+### 5.4 Match feed
+
+Match data sits behind a `MatchFeed` interface with two implementations:
+
+- **ReplayFeed (build first):** plays a recorded match from a JSON file, ball by ball, at a configurable speed
+  (real time, 2×, 10×). It can be started from an admin endpoint or a script, so a "live IPL final" can be staged
+  at any time for demos and testing, and the frontend can be built without a third-party API.
+- **ApiFeed (later):** polls a cricket data API (CricketData.org, Roanuz, Sportmonks, Entity Sport) for fixtures
+  daily and live scores every 10–30s. Free tiers often have low daily request limits, and polling every 15s is
+  about 5,700 requests per day per match, so check the limits before choosing a provider.
+
+### 5.5 Video provider adapter
+
+All LiveKit calls go through a `VideoProvider` interface: `getPublishToken`, `endStream`, `getViewerToken`,
+`createClip`, plus webhook handling for stream-started and stream-ended events. Only one implementation
+(LiveKit) exists for now.
+
+Track conventions for browser streams, so the player knows what each track is:
+
+| Track | LiveKit source | Notes |
+| --- | --- | --- |
+| Match video | `screen_share` | Screen/tab share or local file. Publish at up to 1080p with simulcast so slow viewers get a lower layer. |
+| Match audio | `screen_share_audio` | Tab audio or the file's audio |
+| Facecam video | `camera` | 720p is enough |
+| Creator voice | `microphone` | Echo cancellation on; creators should wear headphones so match audio doesn't loop into the mic |
+
+Clips record the composited view (match + facecam in the creator's default layout) through LiveKit's room
+composite egress.
 
 ---
 
@@ -250,7 +330,7 @@ users           id, name (unique), password_hash, role ('creator'|'viewer'), ava
 sessions        token, user_id, created_at
 
 channels        id, user_id (creator), display_name, banner_url, tags[], favourite_team,
-                stream_key, slow_mode_secs, subs_only, followers_only, created_at
+                slow_mode_secs, subs_only, followers_only, created_at
 follows         follower_id, channel_id, created_at
 
 matches         id, external_id, sport, tournament, team_a, team_b, starts_at,
@@ -294,7 +374,7 @@ notifications   id, user_id, type, payload_json, read, created_at
 | GET | `/channels/:id` | channel page data |
 | POST/DELETE | `/channels/:id/follow` | follow / unfollow |
 | GET | `/me/following` | followed channels |
-| POST | `/streams` | go live (returns ingest info) |
+| POST | `/streams` | go live (returns a publish token) |
 | POST | `/streams/:id/end` | end stream |
 | POST | `/streams/:id/clips` | create clip |
 | GET | `/channels/:id/clips`, `/matches/:id/clips` | list clips |
@@ -330,7 +410,10 @@ notifications   id, user_id, type, payload_json, read, created_at
 ## 8. Open questions
 
 1. **Web-first or mobile-first?** The design is mobile-first responsive web. Native apps come later.
-2. **Video provider:** LiveKit (self-hostable, free tier, browser + RTMP) vs Mux / AWS IVS (simpler, paid).
-3. **Cricket data API:** which provider, and does its free tier cover the live-score polling rate we need?
-4. **Launch moment:** test around a specific tournament so match pages have real fixtures?
-5. **Creator/viewer split:** can a viewer later upgrade to creator, or is the role fixed at signup?
+2. **Cricket data API:** which provider for `ApiFeed`, and does its free tier cover the live-score polling rate we
+   need? (Not blocking: the ReplayFeed covers development and demos.)
+3. **Launch moment:** test around a specific tournament so match pages have real fixtures?
+4. **Creator/viewer split:** can a viewer later upgrade to creator, or is the role fixed at signup?
+5. **Broadcast rights before a public launch:** private testing with older matches is fine, but publicly streaming
+   match footage needs a plan (licensed content, rights-holder deals, or a takedown process). Needs a lawyer before
+   launch.
