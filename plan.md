@@ -157,7 +157,7 @@ New ideas that come up during the build go here, unbuilt.
 | Module | Step | Status |
 | --- | --- | --- |
 | M1 | S0 LiveKit spike | done: two-track publish + file audio work on LiveKit Cloud |
-| M1 | S1 Scaffold | not started |
+| M1 | S1 Scaffold | done: monorepo, both apps, full schema, Dream11 tokens |
 | M1 | S2 Auth + shell | not started |
 | M1 | S3 Go live + watch | not started |
 | M1 | S4 Chat | not started |

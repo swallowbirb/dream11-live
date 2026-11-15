@@ -60,8 +60,20 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
   `pnpm check` runs the headless publish → watch check against a running `pnpm start` and writes
   `test-media/viewer.png`. Stop a background server by its PID, not `pkill -f` (it matches its own shell).
 
-TODO: the rest is filled in during M1 P2 (scaffold): install, dev server, build, typecheck. Stack: pnpm monorepo,
-`apps/web` (Vite + React), `apps/server` (Fastify + Socket.IO + Prisma on SQLite), `packages/shared`.
+- **App (pnpm monorepo):** `apps/web` (Vite 8 + React 19 + Tailwind 4 + shadcn), `apps/server` (Fastify 5 +
+  Socket.IO + Prisma 6 on SQLite), `packages/shared` (`@d11/shared`: event names in `EV`, Zod schemas; consumed
+  as TS source, no build step). `spike/` is not in the workspace.
+  - `pnpm install` at the root installs everything.
+  - `pnpm dev` runs both: web http://localhost:5173 (proxies `/api` and `/socket.io` to the server), server
+    http://localhost:3001. Run it in the background with `setsid … &` and stop it with `kill -- -<pid>` (kills
+    the process group, both apps).
+  - `pnpm typecheck`: `tsc` in all three packages. This is the check.
+  - `pnpm db:migrate` (`prisma migrate dev`, after editing `apps/server/prisma/schema.prisma`), `pnpm db:seed`
+    (seed script arrives in P3). The DB is `apps/server/prisma/dev.db` (gitignored).
+  - `pnpm --filter web build`: production build of the web app.
+  - Server env: `apps/server/.env` (gitignored, copy of `.env.example`; LiveKit keys copied from `spike/.env`).
+  - Add shadcn components from `apps/web`: `pnpm dlx shadcn@latest add <name>`.
+  - **TypeScript is pinned to ~5.9** in every package: `latest` is TS 7 (native port); don't upgrade mid-build.
 
 ## Build and typecheck
 

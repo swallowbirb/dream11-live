@@ -1,0 +1,244 @@
+// Full data model from DESIGN.md §6, on SQLite for the prototype.
+// SQLite has no enums or arrays: enum-like fields are String, tags[] and *_json are JSON in a String.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  passwordHash String
+  role         String // 'creator' | 'viewer'
+  avatarUrl    String?
+  bio          String?
+  createdAt    DateTime @default(now())
+
+  sessions      Session[]
+  channel       Channel?
+  follows       Follow[]
+  chatMessages  ChatMessage[]
+  pollVotes     PollVote[]
+  clips         Clip[]
+  subscriptions Subscription[]
+  moderating    Moderator[]
+  bans          Ban[]          @relation("BannedUser")
+  bansIssued    Ban[]          @relation("BanIssuer")
+  modActions    ModAction[]    @relation("ModActor")
+  modTargeted   ModAction[]    @relation("ModTarget")
+  notifications Notification[]
+}
+
+model Session {
+  token     String   @id
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Channel {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  displayName   String
+  bannerUrl     String?
+  tags          String   @default("[]") // JSON string[]
+  favouriteTeam String?
+  slowModeSecs  Int      @default(0)
+  subsOnly      Boolean  @default(false)
+  followersOnly Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  followers     Follow[]
+  streams       Stream[]
+  subTiers      SubTier[]
+  subscriptions Subscription[]
+  moderators    Moderator[]
+  bans          Ban[]
+  blockedWords  BlockedWord[]
+  modActions    ModAction[]
+}
+
+model Follow {
+  followerId String
+  channelId  String
+  createdAt  DateTime @default(now())
+  follower   User     @relation(fields: [followerId], references: [id], onDelete: Cascade)
+  channel    Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, channelId])
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  externalId String?  @unique
+  sport      String   @default("cricket")
+  tournament String
+  teamA      String
+  teamB      String
+  startsAt   DateTime
+  status     String   @default("upcoming") // 'upcoming' | 'live' | 'completed'
+  scoreJson  String   @default("{}")
+  updatedAt  DateTime @updatedAt
+  streams    Stream[]
+}
+
+model Stream {
+  id             String    @id @default(cuid())
+  channelId      String
+  matchId        String?
+  title          String
+  language       String    @default("English")
+  supportingTeam String?
+  status         String    @default("starting") // 'starting' | 'live' | 'ended'
+  providerRef    String?
+  viewerCount    Int       @default(0)
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+
+  channel        Channel         @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  match          Match?          @relation(fields: [matchId], references: [id])
+  chatMessages   ChatMessage[]
+  reactionTotals ReactionTotal[]
+  polls          Poll[]
+  clips          Clip[]
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  streamId  String
+  userId    String
+  body      String
+  teamBadge String?
+  deletedBy String?
+  createdAt DateTime @default(now())
+  stream    Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([streamId, createdAt])
+}
+
+model ReactionTotal {
+  streamId String
+  emoji    String
+  count    Int    @default(0)
+  stream   Stream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  @@id([streamId, emoji])
+}
+
+model Poll {
+  id          String     @id @default(cuid())
+  streamId    String
+  question    String
+  optionsJson String // JSON string[]
+  status      String     @default("open") // 'open' | 'closed'
+  createdAt   DateTime   @default(now())
+  stream      Stream     @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  votes       PollVote[]
+}
+
+model PollVote {
+  pollId      String
+  userId      String
+  optionIndex Int
+  poll        Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([pollId, userId])
+}
+
+model Clip {
+  id          String   @id @default(cuid())
+  streamId    String
+  createdBy   String
+  title       String
+  startOffset Int
+  duration    Int
+  url         String?
+  createdAt   DateTime @default(now())
+  stream      Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  creator     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+}
+
+model SubTier {
+  id            String         @id @default(cuid())
+  channelId     String
+  name          String
+  displayPrice  String
+  perks         String
+  badgeUrl      String?
+  rank          Int
+  channel       Channel        @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  channelId String
+  tierId    String
+  status    String   @default("active") // 'active' | 'cancelled'
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  tier      SubTier  @relation(fields: [tierId], references: [id], onDelete: Cascade)
+}
+
+model Moderator {
+  channelId String
+  userId    String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, userId])
+}
+
+model Ban {
+  channelId String
+  userId    String
+  expiresAt DateTime? // null = permanent
+  reason    String?
+  byUserId  String
+  channel   Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User      @relation("BannedUser", fields: [userId], references: [id], onDelete: Cascade)
+  by        User      @relation("BanIssuer", fields: [byUserId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, userId])
+}
+
+model BlockedWord {
+  channelId String
+  word      String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, word])
+}
+
+model ModAction {
+  id           String   @id @default(cuid())
+  channelId    String
+  actorId      String
+  targetUserId String?
+  action       String
+  details      String?
+  createdAt    DateTime @default(now())
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  actor        User     @relation("ModActor", fields: [actorId], references: [id], onDelete: Cascade)
+  target       User?    @relation("ModTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  payloadJson String   @default("{}")
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

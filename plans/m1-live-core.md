@@ -9,12 +9,12 @@ Anything new goes to `plan.md` §8.
 
 ## Status (update at the end of every phase)
 
-**Next up: P2 (scaffold).** A new chat starts from here: read `CLAUDE.md`, then this file, then the next phase.
+**Next up: P3 (auth + shell).** A new chat starts from here: read `CLAUDE.md`, then this file, then the next phase.
 
 | Phase | Status | Handoff notes |
 | --- | --- | --- |
 | P1 Spike | done (2026-11-15) | Two-track publish + file audio work on LiveKit Cloud. Keys in `spike/.env`. Headless check: `spike/check.mjs` (see `CLAUDE.md` Commands). Register LiveKit listeners before `connect()`. |
-| P2 Scaffold | not started | |
+| P2 Scaffold | done (2026-11-15) | Workspace, both apps, shared package, full DESIGN §6 schema as migration `init` (camelCase Prisma fields, enum-ish and JSON columns as `String`). `pnpm dev` shows a red header + health card; `pnpm typecheck` clean. Web: `@/` alias → `apps/web/src`, `api()` fetch helper in `src/lib/api.ts`, tokens in `src/index.css` (Tailwind colours `brand`, `brand-dark`, `ink`, `success`, `warning`, `gold`; fonts `font-sans` Inter, `font-display` Barlow Semi Condensed, `tabular` utility; shadcn vars mapped onto them). shadcn added: button, input, card, dialog, slider, sonner, label (shadcn now imports `cn` from the `cn` package). Sonner forced to light theme (next-themes removed). Server: `src/index.ts` (Fastify + Socket.IO on one port), `src/db.ts` (Prisma client). `@d11/shared`: `EV` event names + Zod `SignupBody`, `LoginBody`, `GoLiveBody`, `ChatSend`. React Router is v8 (`createBrowserRouter` from `react-router`); all paths currently render `App`. `livekit-server-sdk` already installed in server. Gotchas: TS pinned ~5.9 (latest is 7); Prisma pinned 6 (7 needs driver adapters); dotenv dropped for `tsx --env-file`. |
 | P3 Auth + shell | not started | |
 | P4 Go live | not started | |
 | P5 Player | not started | |
