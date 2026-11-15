@@ -7,7 +7,12 @@
     "typecheck": "pnpm -r typecheck",
     "db:migrate": "pnpm --filter server db:migrate",
     "db:seed": "pnpm --filter server db:seed",
-    "replay": "pnpm --filter server replay"
+    "replay": "pnpm --filter server replay",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter server start"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  }
 }

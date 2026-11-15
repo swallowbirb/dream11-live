@@ -1,6 +1,7 @@
 // pnpm replay [start [speed] | stop | status]. Speed is a multiple of real time (default 10 = 3 s a ball).
+// Against a deployed site: SITE=https://your-app.example pnpm replay
 const [cmd = 'start', speed] = process.argv.slice(2);
-const base = `http://localhost:${process.env.PORT ?? 3001}/api/replay`;
+const base = `${process.env.SITE ?? `http://localhost:${process.env.PORT ?? 3001}`}/api/replay`;
 const res =
   cmd === 'status'
     ? await fetch(base)

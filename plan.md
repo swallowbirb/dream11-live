@@ -172,4 +172,4 @@ New ideas that come up during the build go here, unbuilt.
 | M3 | S1 Follow + notify | done: follow/unfollow, channel page, Following page, go-live toast |
 | M3 | S2 Subs + mod (thin) | done: tiers, checkout modal, SUB badge; creator deletes messages and bans |
 | M3 | S3 Polish pass | done: LIVE pulse, press feedback, skeletons, empty states, profile, live dashboard layout, side-by-side fix; demo script passes headless |
-| M3 | S4 Deploy (stretch) | not started: optional and outward-facing (Railway, Vercel, accounts, secrets); waits for the user's go-ahead |
+| M3 | S4 Deploy (stretch) | code ready (2026-11-15): one service instead of Vercel + Railway; the server serves the built web app, SQLite on a persistent volume (no Postgres switch). The deploy itself is the user's (account, secrets) |

@@ -74,6 +74,10 @@ The whole prototype has a **4–5 hour budget**. This overrides polish and compl
     `apps/server/replays/ind-aus.json` ball by ball on the seeded IND vs AUS match. Speed is a multiple of real
     time (≈30 s a ball): default 10 (3 s a ball), 300 for a 4-second check run. Start restarts from ball 0.
   - `pnpm typecheck`: `tsc` in all three packages. This is the check.
+  - **Production (one service):** `pnpm build` builds `apps/web/dist`; `pnpm start` runs `prisma migrate deploy`,
+    the seed (upserts) and the server, which also serves `apps/web/dist` with an SPA fallback on the same origin
+    (no CORS). Needs `PORT`, `DATABASE_URL` (SQLite file on a persistent disk), `LIVEKIT_*` from the environment.
+    `SITE=https://… pnpm replay` drives the replay on a deployed site (replay routes have no auth).
   - `pnpm db:migrate` (`prisma migrate dev`, after editing `apps/server/prisma/schema.prisma`), `pnpm db:seed`
     (`apps/server/prisma/seed.ts`, upserts, safe to re-run). The DB is `apps/server/prisma/dev.db` (gitignored).
   - **Seed users** (password `pass` for all): creators `RohitReacts`, `AussieAnalyst`, `CoverDriveComedy`;
