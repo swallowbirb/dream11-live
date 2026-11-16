@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dream11 Live: Project Submission</title>
+<style>
+  @page { size: A4; margin: 16mm 16mm 18mm; }
+  :root { --brand: #d11f26; --brand-dark: #a3161b; --ink: #1a1a1a; --muted: #5b5b5b; --line: #e4e4e4; --soft: #fbf3f3; }
+  * { box-sizing: border-box; }
+  body { font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.5; margin: 0; background: #fff; }
+  h1 { font-size: 24pt; margin: 0; letter-spacing: -0.02em; }
+  h2 { font-size: 13.5pt; color: var(--brand-dark); margin: 20px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--brand); break-after: avoid; }
+  h3 { font-size: 11pt; margin: 12px 0 4px; break-after: avoid; }
+  p { margin: 0 0 7px; }
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  a { color: var(--brand-dark); }
+  code { font-family: "JetBrains Mono", Consolas, monospace; font-size: 9pt; background: #f3f3f3; padding: 1px 4px; border-radius: 3px; }
+  .hero { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; padding: 20px 22px; border-radius: 10px; }
+  .hero p { margin: 6px 0 0; opacity: 0.95; font-size: 11pt; }
+  .links { width: 100%; border-collapse: collapse; margin: 14px 0 4px; }
+  .links td { padding: 6px 10px; border: 1px solid var(--line); vertical-align: top; }
+  .links td:first-child { width: 28%; font-weight: 600; background: var(--soft); }
+  table.grid { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 9.5pt; break-inside: auto; }
+  table.grid th, table.grid td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  table.grid th { background: var(--soft); font-weight: 600; }
+  table.grid tr { break-inside: avoid; }
+  .shot { width: 100%; border: 1px solid var(--line); border-radius: 6px; margin: 6px 0 2px; }
+  .caption { font-size: 8.5pt; color: var(--muted); margin-bottom: 8px; }
+  .callout { background: var(--soft); border-left: 3px solid var(--brand); padding: 8px 12px; margin: 8px 0; border-radius: 0 6px 6px 0; }
+  .todo { background: #fff4c2; padding: 0 4px; border-radius: 3px; }
+  .section { break-inside: auto; }
+  .keep { break-inside: avoid; }
+  .pagebreak { break-before: page; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Dream11 Live</h1>
+  <p>A live streaming platform where cricket fans watch a match <b>through their favourite creator</b>, with live
+  score, chat, emoji reactions, a hype meter and polls on one screen.</p>
+</div>
+
+<table class="links">
+  <tr><td>GitHub</td><td><a href="https://github.com/swallowbirb/dream11-live">github.com/swallowbirb/dream11-live</a></td></tr>
+  <tr><td>Live deployment</td><td><a href="https://dream11-live.vercel.app">dream11-live.vercel.app</a><br>
+    Log in as <code>priya</code> / <code>pass</code> (viewer) or <code>RohitReacts</code> / <code>pass</code> (creator).
+    The server runs on a free plan, so the first load after a quiet spell can take about a minute.</td></tr>
+  <tr><td>Demo video</td><td><span class="todo">DEMO_VIDEO_LINK</span></td></tr>
+</table>
+
+<h2>1. Why this project: the problem</h2>
+<p>In India, cricket is watched together. Fans argue over a bowling change, celebrate a six and groan at a dropped
+catch with friends and family. That shared reaction is half the fun of a match. But most fans now watch alone on a
+phone, and the tools they have don't recreate that feeling:</p>
+<ul>
+  <li><b>TV and OTT streams are one-way.</b> You can't talk back, and nobody hears you celebrate.</li>
+  <li><b>YouTube watch-alongs scatter the experience.</b> The creator is in one tab, the score in another app,
+    friends in a WhatsApp group. Chat scrolls too fast to read, and the stream runs 10 to 30 seconds behind, so a
+    score notification often spoils the six before the creator reacts to it.</li>
+  <li><b>Creator and match are stuck together in one video.</b> A viewer can't turn the creator up and the match
+    commentary down, or move the creator's face off the batter.</li>
+  <li><b>No home for the match.</b> There is no single place that says "IND vs AUS is live, here are the 12 creators
+    watching it, in Hindi, Tamil or English, supporting either side".</li>
+</ul>
+<div class="callout"><b>Hypothesis.</b> Fans will watch more of a match, and come back for the next one, when they can
+watch it through a creator who speaks their language and backs their team, with the live score and the crowd's
+reactions in the same place, and everyone seeing each ball at the same moment.</div>
+
+<h2>2. The solution</h2>
+<p>Dream11 Live is a Twitch-style platform built around cricket matches instead of games.</p>
+<ul>
+  <li><b>Match hub:</b> every live match is a page listing all the creators streaming it, with their language and
+    the team they support.</li>
+  <li><b>Creator streams with two sources:</b> a creator goes live from the browser with the match video and their own
+    camera and mic, sent as separate tracks.</li>
+  <li><b>Viewer-controlled player:</b> draggable picture-in-picture or side by side, plus separate volume sliders for
+    match audio and creator voice.</li>
+  <li><b>Ball-by-ball scorecard</b> under the player: score, batters, bowler and the last six balls, pushed live to
+    every stream on that match.</li>
+  <li><b>Crowd features:</b> real-time chat with team badges (🇮🇳 / 🇦🇺), CREATOR and SUB badges; six emoji reactions
+    that float over the video and drive a hype meter; polls run by the creator with live results on the video.</li>
+  <li><b>Creator tools:</b> followers with go-live notifications, three subscription tiers with a checkout flow (mock,
+    no payment), and moderation (delete message, ban).</li>
+  <li><b>Always something on:</b> six bot creators stay live on the deployed site with real cricket footage, chat
+    that reacts to each ball, and their own polls, so a visitor never lands on an empty platform.</li>
+</ul>
+
+<img class="shot" src="img/watch.png" alt="Watch page on the live site">
+<div class="caption">The watch page on the deployed site: match video with the creator in picture-in-picture, a live
+poll, reactions and hype meter, the ball-by-ball scorecard and chat with team and SUB badges.</div>
+
+<h2>3. Why this is the best solution</h2>
+<table class="grid keep">
+  <tr><th>Option fans use today</th><th>What it misses</th></tr>
+  <tr><td>TV / OTT broadcast</td><td>One-way. No community, no choice of voice or language beyond a few feeds.</td></tr>
+  <tr><td>YouTube watch-along</td><td>10–30 s delay, creator and match baked into one video, score and friends in other apps.</td></tr>
+  <tr><td>Score apps and text commentary</td><td>Fast, but no voice, no faces, no shared moment.</td></tr>
+  <tr><td>Discord / WhatsApp watch party</td><td>Only with people you already know; not discoverable; no score built in.</td></tr>
+</table>
+<p>Dream11 Live combines what each of these does well, and the design choices behind it are deliberate:</p>
+<ol>
+  <li><b>Sub-second latency (WebRTC through LiveKit).</b> A reaction that arrives after the six feels dead. Standard
+    streaming (HLS) runs 10–30 s behind; WebRTC keeps the creator, the chat, the reactions and the scorecard on the
+    same ball.</li>
+  <li><b>Separate tracks, mixed on the viewer's side.</b> Because the match and the creator are separate streams,
+    each viewer picks their own layout and audio balance. A one-video stream (YouTube, OBS) can't do this.</li>
+  <li><b>Everything on one screen.</b> Score, chat, reactions and polls sit next to the video, so the fan never
+    switches app and never sees a spoiler first.</li>
+  <li><b>Discovery built around the match.</b> Fans start from the match they care about and pick a creator by
+    language and team. This is how fans already think, and it gives smaller regional creators an audience.</li>
+  <li><b>Ready for real rights and real data.</b> The match video and the creator are independent, so in a real
+    launch the match track can come from a licensed feed and creators add only their face and voice. Scores come
+    through a <code>MatchFeed</code> interface (a replayed match today, a live cricket API tomorrow) and video
+    through a <code>VideoProvider</code> interface, so either can be swapped without touching the app.</li>
+  <li><b>It works today.</b> The prototype is deployed, used end to end, and every feature was checked in a headless
+    browser with fake camera and mic, not just mocked.</li>
+</ol>
+
+<h3>Alignment with Dream11's vision</h3>
+<p>Dream Sports' mission is to <b>Make Sports Better</b>, and Dream11's strength is being where fans are during a live
+match. Dream11 Live extends that from picking a team before the toss to <b>watching the whole match together</b>:</p>
+<ul>
+  <li><b>Engagement for the whole match, not just before it.</b> Fans stay in the app for three hours of live
+    play, every ball, instead of opening it only before the match.</li>
+  <li><b>Engagement that doesn't depend on money.</b> Since India's 2025 online gaming law ended paid contests,
+    community and content have to keep fans coming back. Creators, chat, polls and (next) free predictions do that.</li>
+  <li><b>A creator economy for Indian cricket.</b> Regional-language creators get an audience and earn through
+    subscriptions, and they bring their own communities to the platform.</li>
+  <li><b>Fits the Dream Sports family.</b> Licensed match video (for example through FanCode) can drop into the
+    match track, with Dream11's fan base providing the audience.</li>
+</ul>
+
+<h2>4. Tech stack</h2>
+<table class="grid keep">
+  <tr><th>Layer</th><th>Technology</th></tr>
+  <tr><td>Frontend</td><td>React 19, Vite 8, TypeScript, Tailwind CSS 4, shadcn/ui (Radix), TanStack Query, Zustand, Motion</td></tr>
+  <tr><td>Backend</td><td>Node.js 22, Fastify 5, Socket.IO 4, Zod 4 (validation shared with the client)</td></tr>
+  <tr><td>Data</td><td>Prisma 6 on SQLite (Postgres with a one-line change)</td></tr>
+  <tr><td>Video</td><td>LiveKit Cloud (WebRTC SFU), livekit-client, livekit-server-sdk</td></tr>
+  <tr><td>Tooling</td><td>pnpm workspaces monorepo, strict TypeScript, Playwright (headless end-to-end checks), FFmpeg</td></tr>
+  <tr><td>Hosting</td><td>Vercel (web app), Render via Docker (API, WebSockets and the bot director)</td></tr>
+</table>
+<p>The monorepo has three packages: <code>apps/web</code> (React app), <code>apps/server</code> (Fastify + Socket.IO,
+Prisma, match feed, bots) and <code>packages/shared</code>, which holds every socket event name, payload type and
+Zod schema so the client and server can't drift apart.</p>
+
+<h2>5. AI tools used</h2>
+<ul>
+  <li><b>Claude Code (Anthropic)</b> as a pair programmer, in VS Code and the terminal. I used it to:
+    <ul>
+      <li>write the design doc and a time-boxed build plan (three modules, each split into phases, with a cut list);</li>
+      <li>write and review code phase by phase, with a handoff note after each phase;</li>
+      <li>test every feature in a headless browser (Playwright with a fake camera and mic) and read the screenshots;</li>
+      <li>convert stock footage with FFmpeg, set up the deployment and write the documentation.</li>
+    </ul>
+  </li>
+</ul>
+<p>The product decisions were mine: the problem, which features to keep and cut, the design and the tech trade-offs.
+AI made it possible to build and properly test a full real-time product in a very short time.</p>
+
+<h2>6. Problems faced and how I navigated them</h2>
+<table class="grid">
+  <tr><th style="width:42%">Problem faced</th><th>How I navigated it</th></tr>
+  <tr><td><b>Riskiest part first: two video sources with separate audio from a browser.</b> If the match and the
+    camera couldn't go out as separate tracks, the custom layouts and audio mix were impossible.</td>
+    <td>Built a small spike before anything else and tested it headless on LiveKit Cloud. It proved four tracks
+    (match video and audio, camera, mic) work, and showed that LiveKit's event listeners must be registered before
+    connecting. The whole app was planned only after that passed.</td></tr>
+  <tr><td><b>Testing live video without a person.</b> Playwright's Chromium can't play H.264, so normal MP4 test
+    videos showed black.</td>
+    <td>Generated WebM test media with FFmpeg and ran Chromium with a fake camera and mic, so every video feature
+    could be checked automatically, with several browsers at once.</td></tr>
+  <tr><td><b>Side-by-side layout left the match video black for good</b> if a viewer switched layout soon after
+    joining.</td>
+    <td>Traced it to the layout switch remounting the video element while LiveKit's adaptive streaming had paused
+    the track. Fixed by keeping the main video element mounted and changing only the layout around it.</td></tr>
+  <tr><td><b>Reactions could flood the server and showed twice</b> for the person tapping.</td>
+    <td>Batched taps on the client every 250 ms and aggregated them on the server, which broadcasts one burst per
+    stream four times a second. The tapper's own taps float at once, and their echo is subtracted from the next
+    burst.</td></tr>
+  <tr><td><b>No reliable live cricket data.</b> Free cricket APIs have low daily limits (polling every 15 s is
+    about 5,700 requests per match per day), and there isn't always a live match.</td>
+    <td>Put scores behind a <code>MatchFeed</code> interface and built a ReplayFeed that plays a recorded innings
+    ball by ball at any speed. A live match can be staged any time, and a real API can be added later.</td></tr>
+  <tr><td><b>An empty platform looks broken</b> (the cold start problem): a reviewer opening the site would find no
+    one live.</td>
+    <td>Built a server-side bot director: six creator personas stream real cricket footage (free-licence clips) with
+    reacting facecams; 60 chatters post lines that react to each six, four and wicket; polls run on their own.</td></tr>
+  <tr><td><b>Deployment: WebSockets don't run on serverless hosting</b>, and the free server plan has no disk.</td>
+    <td>Split the deploy: the static web app on Vercel, and the long-running Socket.IO server in a Docker container
+    on Render, with CORS for Vercel domains. The seed is idempotent, so demo data and bots rebuild themselves after
+    every restart.</td></tr>
+  <tr><td><b>A very tight time budget</b> for a product with video, real time, social features and polish.</td>
+    <td>Wrote the plan first: three modules, timeboxes, a demo script as the acceptance test and a cut list in
+    priority order. Built the happy path only, and parked new ideas instead of building them.</td></tr>
+</table>
+
+<h2>7. Future steps</h2>
+<h3>1. Ball-by-ball predictions with leaderboards</h3>
+<p>Before each over or delivery, viewers predict the outcome ("runs this over", "wicket this over?") for free points.
+The match feed already knows every ball, so predictions settle automatically. Each stream gets its own leaderboard,
+and the creator can call out the top fans live. This is Dream11's core strength (fantasy and predictions) brought
+into the live moment, and it gives every viewer a reason to stay for every ball.</p>
+<h3>2. Real live data and auto-clips of the big moments</h3>
+<p>Replace the replayed match with a live cricket data API behind the existing <code>MatchFeed</code> interface. Then
+use those score events to cut clips automatically: when a wicket or six happens, record the creator's reaction with
+the match (LiveKit Egress) and post it to the match page. Fans who missed it can catch up, and the best reactions
+become shareable content that brings new fans in.</p>
+
+</body>
+</html>
